@@ -19,20 +19,22 @@ func TestSaveConf(t *testing.T) {
 					ConnReadBuffer:  1048576,
 					KV:              map[string]interface{}{},
 				},
+			},
+			util.ClusterTypeDispatcher: []ServerConf{
 				{
-					Ip:              "0.0.0.0",
-					Port:            8881,
-					MaxConn:         1000,
+					Ip:              "127.0.0.1",
+					Port:            8889,
+					MaxConn:         10000,
 					ConnWriteBuffer: 1048576,
 					ConnReadBuffer:  1048576,
 					KV:              map[string]interface{}{},
 				},
 			},
-			util.ClusterTypeDispatcher: []ServerConf{
+			util.ClusterTypeGame: []ServerConf{
 				{
 					Ip:              "127.0.0.1",
-					Port:            8848,
-					MaxConn:         10000,
+					Port:            8890,
+					MaxConn:         1000,
 					ConnWriteBuffer: 1048576,
 					ConnReadBuffer:  1048576,
 					KV:              map[string]interface{}{},

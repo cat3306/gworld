@@ -11,7 +11,6 @@ import (
 type ClientEvents struct {
 	*gnet.BuiltinEventEngine
 	handlerMgr    *HandlerManager
-	packetLen     int
 	clientCtxChan chan *protocol.Context
 	ConnMgr       *ConnManager
 	clusterType   util.ClusterType
@@ -32,8 +31,9 @@ func (ev *ClientEvents) OnBoot(e gnet.Engine) (action gnet.Action) {
 func (ev *ClientEvents) OnOpen(c gnet.Conn) ([]byte, gnet.Action) {
 	c.SetId(util.GenId(9))
 	ev.ConnMgr.Add(c)
-	glog.Logger.Sugar().Info("")
-	return nil, gnet.None
+	glog.Logger.Sugar().Infof("dispatcher client conn:%s,clusterType:%s", c.ID(), ev.clusterType)
+	raw := protocol.Encode(uint32(ev.clusterType), protocol.Uint32, util.MethodHash(util.MethodSetDispatcherType))
+	return raw, gnet.None
 }
 
 func (ev *ClientEvents) OnClose(c gnet.Conn, err error) gnet.Action {

@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"github.com/cat3306/goworld/components/dispatcher/router"
+	"github.com/cat3306/goworld/components/game/router"
 	"github.com/cat3306/goworld/conf"
 	"github.com/cat3306/goworld/engine"
 	"github.com/cat3306/goworld/glog"
@@ -25,14 +25,17 @@ func main() {
 		glog.Logger.Sugar().Errorf("conf.Load err:%s", err.Error())
 		return
 	}
-	config := conf.GlobalConf.Select(util.ClusterTypeDispatcher, idx)
-	server := DispatcherServer{
-		Server:      engine.NewEngine(config, util.ClusterTypeDispatcher),
-		gateClients: engine.NewConnManager(),
-		gameClients: engine.NewConnManager(),
+	config := conf.GlobalConf.Select(util.ClusterTypeGame, idx)
+	server := GameServer{
+		base: engine.NewEngine(config, util.ClusterTypeGame),
+
+	}
+	err = server.DispatcherInitialize()
+	if err != nil {
+		panic(err)
 	}
 	server.AddRouter(new(router.HeartBeat))
-	server.AddHandler(util.MethodSetDispatcherType, router.SetDispatcherType)
+
 	server.Run()
 	glog.Logger.Sugar().Infof("%+v", config)
 }

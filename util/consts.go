@@ -14,6 +14,10 @@ const (
 	DispatcherConnMgrKey = "DispatcherConnMgrKey"
 	GameConnMgrKey       = "GameConnMgrKey"
 )
+const (
+	GateClientMgrKey = "GateClientMgrKey"
+	GameClientMgrKey = "GameClientMgrKey"
+)
 
 func (c ClusterType) String() string {
 	if c == ClusterTypeGate {
@@ -25,3 +29,7 @@ func (c ClusterType) String() string {
 	}
 	return "invalid cluster type"
 }
+
+const (
+	MethodSetDispatcherType = "SetDispatcherType"
+)

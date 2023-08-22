@@ -7,6 +7,7 @@ const (
 	String      = CodeType(1)
 	Json        = CodeType(2)
 	ProtoBuffer = CodeType(3)
+	Uint32      = CodeType(4)
 )
 
 type Coder interface {
@@ -23,6 +24,8 @@ func GameCoder(codeType CodeType) Coder {
 		return &rawString{CodeType: String}
 	case ProtoBuffer:
 		return &protocBufferCoder{CoderType: ProtoBuffer}
+	case Uint32:
+		return &rawUint32{CodeType: Uint32}
 	default:
 		return &rawString{}
 	}

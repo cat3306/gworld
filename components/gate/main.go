@@ -27,7 +27,7 @@ func main() {
 	}
 	config := conf.GlobalConf.Select(util.ClusterTypeGate, idx)
 	server := GateServer{
-		base: engine.NewEngine(config, util.ClusterTypeGate),
+		Server: engine.NewEngine(config, util.ClusterTypeGate),
 	}
 	server.AddRouter(new(router.HeartBeat))
 	err = server.DispatcherInitialize()
@@ -35,5 +35,4 @@ func main() {
 		panic(err)
 	}
 	server.Run()
-	glog.Logger.Sugar().Infof("%+v", config)
 }

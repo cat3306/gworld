@@ -22,14 +22,14 @@ func (h *HeartBeat) HeartBeat(ctx *protocol.Context) {
 		glog.Logger.Sugar().Errorf("Bind err:%s", err)
 	}
 }
-func (h *HeartBeat) GlobalHeartBeat(ctx *protocol.Context) {
+func (h *HeartBeat) HelloGame(ctx *protocol.Context) {
 	str := ""
 	err := ctx.Bind(&str)
 	glog.Logger.Sugar().Infof("HeartBeat:%s", str)
 	if err != nil {
 		glog.Logger.Sugar().Errorf("Bind err:%s", err)
 	}
-	v, _ := ctx.GetProperty(util.ProtocolCtxConnMgrKey)
+	v, _ := ctx.GetProperty(util.GameConnMgrKey)
 	connMgr := v.(*engine.ConnManager)
 	connMgr.Broadcast(protocol.Encode(str, ctx.CodeType, ctx.Proto))
 }
