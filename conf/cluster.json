@@ -2,6 +2,7 @@
   "servers": {
     "0": [
       {
+        "logic": "gate",
         "host": "0.0.0.0",
         "tcp_port": 8888,
         "max_conn": 1000,
@@ -10,18 +11,9 @@
         "kv": {}
       }
     ],
-    "1": [
-      {
-        "host": "127.0.0.1",
-        "tcp_port": 8889,
-        "max_conn": 10000,
-        "conn_write_buffer": 1048576,
-        "conn_read_buffer": 1048576,
-        "kv": {}
-      }
-    ],
     "2": [
       {
+        "logic": "base",
         "host": "127.0.0.1",
         "tcp_port": 8890,
         "max_conn": 1000,

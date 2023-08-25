@@ -10,10 +10,11 @@ import (
 
 type ClientEvents struct {
 	*gnet.BuiltinEventEngine
-	handlerMgr    *HandlerManager
-	clientCtxChan chan *protocol.Context
-	ConnMgr       *ConnManager
-	clusterType   util.ClusterType
+	handlerMgr        *HandlerManager
+	clientCtxChan     chan *protocol.Context
+	ConnMgr           *ConnManager
+	clusterType       util.ClusterType
+	downstreamConnMgr *ConnManager
 }
 
 func NewClientEvents(ct util.ClusterType) *ClientEvents {
@@ -24,6 +25,10 @@ func NewClientEvents(ct util.ClusterType) *ClientEvents {
 		clusterType:   ct,
 	}
 }
+func (ev *ClientEvents) SetDownstreamConnMgr(c *ConnManager) *ClientEvents {
+	ev.downstreamConnMgr = c
+	return ev
+}
 func (ev *ClientEvents) OnBoot(e gnet.Engine) (action gnet.Action) {
 	go ev.mainRoutine()
 	return
@@ -31,9 +36,10 @@ func (ev *ClientEvents) OnBoot(e gnet.Engine) (action gnet.Action) {
 func (ev *ClientEvents) OnOpen(c gnet.Conn) ([]byte, gnet.Action) {
 	c.SetId(util.GenId(9))
 	ev.ConnMgr.Add(c)
-	glog.Logger.Sugar().Infof("dispatcher client conn:%s,clusterType:%s", c.ID(), ev.clusterType)
-	raw := protocol.Encode(uint32(ev.clusterType), protocol.Uint32, util.MethodHash(util.MethodSetDispatcherType))
-	return raw, gnet.None
+	glog.Logger.Sugar().Infof("client conn:%s,clusterType:%s", c.ID(), ev.clusterType)
+
+	//raw := protocol.Encode(uint32(ev.clusterType), protocol.Uint32, util.MethodHash(util.MethodSetDispatcherType))
+	return nil, gnet.None
 }
 
 func (ev *ClientEvents) OnClose(c gnet.Conn, err error) gnet.Action {
@@ -55,6 +61,7 @@ func (ev *ClientEvents) OnTraffic(c gnet.Conn) (action gnet.Action) {
 	if ctx == nil {
 		panic("context nil")
 	}
+	ctx.SetProperty(util.GateClientMgrKey, ev.downstreamConnMgr)
 	ev.clientCtxChan <- ctx
 	return gnet.None
 }
@@ -74,7 +81,7 @@ func (ev *ClientEvents) mainRoutine() {
 
 func (ev *ClientEvents) AddRouter(routers ...IRouter) {
 	for _, v := range routers {
-		ev.handlerMgr.RegisterRouter(v.Init())
+		ev.handlerMgr.RegisterRouter(v)
 	}
 }
 func (ev *ClientEvents) AddHandler(method string, f func(c *protocol.Context)) {

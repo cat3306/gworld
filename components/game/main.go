@@ -27,15 +27,9 @@ func main() {
 	}
 	config := conf.GlobalConf.Select(util.ClusterTypeGame, idx)
 	server := GameServer{
-		base: engine.NewEngine(config, util.ClusterTypeGame),
-
-	}
-	err = server.DispatcherInitialize()
-	if err != nil {
-		panic(err)
+		Server: engine.NewEngine(config, util.ClusterTypeGame),
 	}
 	server.AddRouter(new(router.HeartBeat))
 
 	server.Run()
-	glog.Logger.Sugar().Infof("%+v", config)
 }

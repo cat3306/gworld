@@ -12,7 +12,7 @@ import (
 )
 
 type Server struct {
-	connMgr *ConnManager
+	ConnMgr *ConnManager
 	gnet.BuiltinEventEngine
 	eng           gnet.Engine
 	HandlerMgr    *HandlerManager
@@ -23,7 +23,7 @@ type Server struct {
 
 func NewEngine(c *conf.ServerConf, ct util.ClusterType) *Server {
 	return &Server{
-		connMgr:       NewConnManager(),
+		ConnMgr:       NewConnManager(),
 		HandlerMgr:    NewHandlerManager(),
 		Config:        c,
 		ct:            ct,
@@ -61,13 +61,13 @@ func (s *Server) OnClose(c gnet.Conn, err error) (action gnet.Action) {
 		reason = err.Error()
 	}
 	glog.Logger.Sugar().Infof("cid:%s close,reason:%s", c.ID(), reason)
-	s.connMgr.Remove(c.ID())
+	s.ConnMgr.Remove(c.ID())
 	return gnet.None
 }
 func (s *Server) OnOpen(c gnet.Conn) (out []byte, action gnet.Action) {
-	cId := util.GenId(9)
+	cId := util.GenConnId()
 	c.SetId(cId)
-	s.connMgr.Add(c)
+	s.ConnMgr.Add(c)
 	glog.Logger.Sugar().Infof("clinet conn cid:%s connect", c.ID())
 	return out, gnet.None
 }
@@ -77,7 +77,7 @@ func (s *Server) OnShutdown(e gnet.Engine) {
 
 func (s *Server) AddRouter(routers ...IRouter) {
 	for _, v := range routers {
-		s.HandlerMgr.RegisterRouter(v.Init())
+		s.HandlerMgr.RegisterRouter(v)
 	}
 }
 func (s *Server) AddHandler(method string, f func(c *protocol.Context)) {

@@ -2,6 +2,11 @@ package util
 
 type ClusterType int
 
+var (
+	CallGate   = MethodHash("CallClient")
+	CallClient = MethodHash("CallClient")
+)
+
 const (
 	ClusterTypeGate       ClusterType = 0
 	ClusterTypeDispatcher ClusterType = 1
@@ -15,8 +20,8 @@ const (
 	GameConnMgrKey       = "GameConnMgrKey"
 )
 const (
-	GateClientMgrKey = "GateClientMgrKey"
-	GameClientMgrKey = "GameClientMgrKey"
+	GateClientMgrKey      = "GateClientMgrKey"
+	GameClientProxyMgrKey = "GameClientProxyMgrKey"
 )
 
 func (c ClusterType) String() string {

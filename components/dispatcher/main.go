@@ -31,8 +31,10 @@ func main() {
 		gateClients: engine.NewConnManager(),
 		gameClients: engine.NewConnManager(),
 	}
-	server.AddRouter(new(router.HeartBeat))
-	server.AddHandler(util.MethodSetDispatcherType, router.SetDispatcherType)
+	server.AddRouter(
+		new(router.HeartBeat),
+		new(router.ServerInner),
+	)
 	server.Run()
 	glog.Logger.Sugar().Infof("%+v", config)
 }

@@ -69,9 +69,17 @@ func Encode(v interface{}, codeType CodeType, proto uint32) []byte {
 	if v == nil {
 		panic("v nil")
 	}
-	raw, err := GameCoder(codeType).Marshal(v)
-	if err != nil {
-		panic(err)
+	var (
+		raw []byte
+		err error
+	)
+	if tmp, ok := v.([]byte); ok {
+		raw = tmp
+	} else {
+		raw, err = GameCoder(codeType).Marshal(v)
+		if err != nil {
+			panic(err)
+		}
 	}
 	bodyOffset := int(payloadLen + protocolLen + codeTypeLen)
 	msgLen := bodyOffset + len(raw)

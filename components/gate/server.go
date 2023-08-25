@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/cat3306/goworld/components/gate/router"
 	"github.com/cat3306/goworld/conf"
 	"github.com/cat3306/goworld/engine"
 	"github.com/cat3306/goworld/glog"
@@ -14,10 +13,8 @@ import (
 
 type GateServer struct {
 	*engine.Server
-	dispatcherClientEvents *engine.ClientEvents
+	gameClientProxy *GameClientProxy
 }
-
-
 
 func (g *GateServer) OnTraffic(c gnet.Conn) gnet.Action {
 	context, err := protocol.Decode(c)
@@ -28,34 +25,48 @@ func (g *GateServer) OnTraffic(c gnet.Conn) gnet.Action {
 	if context == nil {
 		panic("context nil")
 	}
-	context.SetProperty(util.DispatcherConnMgrKey, g.dispatcherClientEvents.ConnMgr)
+	context.SetProperty(util.GameClientProxyMgrKey, g.gameClientProxy.ConnMgr)
 	g.ClientCtxChan <- context
 
 	return gnet.None
 }
 
-func (g *GateServer) DispatcherInitialize() error {
-	g.dispatcherClientEvents = engine.NewClientEvents(util.ClusterTypeGate)
-	g.dispatcherClientEvents.AddRouter(new(router.DisHeartBeat))
-	cli, err := gnet.NewClient(g.dispatcherClientEvents)
+func (g *GateServer) SetLogic(ctx *protocol.Context) {
+	var logic string
+
+	err := ctx.Bind(&logic)
+	if err != nil {
+		glog.Logger.Sugar().Errorf("SetLogic err:%s", err.Error())
+		return
+	}
+	logicHash := util.MethodHash(logic)
+	if _, ok := g.gameClientProxy.connMgrs[logicHash]; ok {
+		glog.Logger.Sugar().Errorf("register repeated logic")
+		return
+	}
+	mgr := engine.NewConnManager()
+	mgr.Add(ctx.Conn)
+	glog.Logger.Sugar().Infof("set logic from game,logic:%s", logic)
+	g.gameClientProxy.connMgrs[logicHash] = mgr
+}
+
+func (g *GateServer) GameInitialize() error {
+	g.gameClientProxy = NewGameClientProxy().SetServer(g)
+	//AddHandler("GlobalHeartBeat", router.GlobalHeartBeat2).
+	g.gameClientProxy.
+		AddHandler("SetLogic", g.SetLogic).
+		AddHandlerUint32(util.CallGate, g.gameClientProxy.HandleGame)
+	cli, err := gnet.NewClient(g.gameClientProxy)
 	if err != nil {
 		return err
 	}
-	list := conf.GlobalConf.ClusterList(util.ClusterTypeDispatcher)
+	list := conf.GlobalConf.ClusterList(util.ClusterTypeGame)
 	for _, v := range list {
 		_, err = cli.Dial("tcp", fmt.Sprintf("%s:%d", v.Ip, v.Port))
 		if err != nil {
 			return err
 		}
 	}
-	//go func() {
-	//	for {
-	//		raw := protocol.Encode("💓", protocol.String, util.MethodHash("HeartBeat"))
-	//		g.dispatcherClientEvents.ConnMgr.Broadcast(raw)
-	//		time.Sleep(time.Second * 1)
-	//	}
-	//
-	//}()
 	return cli.Start()
 }
 func (g *GateServer) Run() {

@@ -3,6 +3,7 @@ package protocol
 import (
 	"errors"
 	"fmt"
+	"unsafe"
 )
 
 type rawUint32 struct {
@@ -13,12 +14,15 @@ func (r *rawUint32) ToString() string {
 	return "uint32"
 }
 func (r *rawUint32) Unmarshal(b []byte, v interface{}) error {
-	if _, ok := v.(*uint32); ok {
+	if vv, ok := v.(*uint32); ok {
+		*vv = *(*uint32)(unsafe.Pointer(vv))
 		u := packetEndian.Uint32(b)
-		v = &u
+		vv = &u
+		v = vv
+		fmt.Println(*v.(*uint32))
 		return nil
 	}
-	return errors.New("v type not *int")
+	return errors.New("v type not *Uint32")
 }
 func (r *rawUint32) Marshal(v interface{}) ([]byte, error) {
 	if vv, ok := v.(uint32); ok {

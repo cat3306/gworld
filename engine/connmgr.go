@@ -37,6 +37,32 @@ func (c *ConnManager) Broadcast(raw []byte) {
 		}
 	}
 }
+func (c *ConnManager) SendByOne(raw []byte, id string) {
+	c.locker.RLock()
+	defer c.locker.RUnlock()
+	if conn, ok := c.connections[id]; ok {
+		err := conn.AsyncWrite(raw, nil)
+		if err != nil {
+			glog.Logger.Sugar().Errorf("AsyncWrite err:%s", err.Error())
+		}
+	} else {
+		glog.Logger.Sugar().Errorf("not found conn:%s", id)
+	}
+}
+func (c *ConnManager) SendBySomeone(raw []byte, ids []string) {
+	c.locker.RLock()
+	defer c.locker.RUnlock()
+	for _, id := range ids {
+		if conn, ok := c.connections[id]; ok {
+			err := conn.AsyncWrite(raw, nil)
+			if err != nil {
+				glog.Logger.Sugar().Errorf("AsyncWrite err:%s", err.Error())
+			}
+		} else {
+			glog.Logger.Sugar().Errorf("not found conn:%s", id)
+		}
+	}
+}
 func (c *ConnManager) BroadcastExceptSelf(raw []byte, cid string) {
 	c.locker.RLock()
 	defer c.locker.RUnlock()
@@ -54,4 +80,16 @@ func (c *ConnManager) Len() int {
 	c.locker.RLock()
 	defer c.locker.RUnlock()
 	return len(c.connections)
+}
+
+func (c *ConnManager) SendSomeOne(raw []byte) {
+	c.locker.RLock()
+	defer c.locker.RUnlock()
+	for _, conn := range c.connections {
+		err := conn.AsyncWrite(raw, nil)
+		if err != nil {
+			glog.Logger.Sugar().Errorf("AsyncWrite err:%s", err.Error())
+		}
+		return
+	}
 }

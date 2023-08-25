@@ -2,7 +2,6 @@ package protocol
 
 import (
 	"github.com/cat3306/goworld/glog"
-	"github.com/cat3306/goworld/util"
 	"sync"
 
 	"github.com/panjf2000/gnet/v2"
@@ -16,10 +15,10 @@ type Context struct {
 	property sync.Map
 }
 
-func (c *Context) SetProperty(k string, v interface{}) {
+func (c *Context) SetProperty(k interface{}, v interface{}) {
 	c.property.Store(k, v)
 }
-func (c *Context) GetProperty(k string) (interface{}, bool) {
+func (c *Context) GetProperty(k interface{}) (interface{}, bool) {
 	return c.property.Load(k)
 }
 func (c *Context) DelProperty(k string) {
@@ -42,8 +41,8 @@ func (c *Context) SendWithCodeType(v interface{}, codeType CodeType) {
 		glog.Logger.Sugar().Errorf("AsyncWrite err:%s", err.Error())
 	}
 }
-func (c *Context) SendWithParams(v interface{}, codeType CodeType, method string) {
-	err := c.AsyncWrite(Encode(v, codeType, util.MethodHash(method)))
+func (c *Context) SendWithParams(v interface{}, codeType CodeType, hash uint32) {
+	err := c.AsyncWrite(Encode(v, codeType, hash))
 	if err != nil {
 		glog.Logger.Sugar().Errorf("AsyncWrite err:%s", err.Error())
 	}

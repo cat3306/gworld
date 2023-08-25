@@ -26,3 +26,6 @@ func GenId(n int) string {
 	}
 	return string(b)
 }
+func GenConnId() string {
+	return GenId(9)
+}

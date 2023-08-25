@@ -36,6 +36,7 @@ func (s *ClusterConf) ClusterIdxs(t util.ClusterType) (idx []int) {
 }
 
 type ServerConf struct {
+	Logic           string                 `json:"logic"`
 	Ip              string                 `json:"host"`     //ip
 	Port            int                    `json:"tcp_port"` //port
 	MaxConn         int                    `json:"max_conn"` //最大连接数

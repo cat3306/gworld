@@ -16,7 +16,7 @@ type MsgModel struct {
 	engine.BaseRouter
 }
 
-func (h *MsgModel) Init() engine.IRouter {
+func (h *MsgModel) Init(v interface{}) engine.IRouter {
 	return h
 }
 func (h *MsgModel) HeartBeat(ctx *protocol.Context) {
@@ -27,7 +27,15 @@ func (h *MsgModel) HeartBeat(ctx *protocol.Context) {
 		glog.Logger.Sugar().Errorf("Bind err:%s", err)
 	}
 }
+func (h *MsgModel) GlobalHeartBeat(ctx *protocol.Context) {
+	s := ""
+	err := ctx.Bind(&s)
+	if err != nil {
+		glog.Logger.Sugar().Errorf("GlobalHeartBeat:err:%s", err.Error())
+	}
+	glog.Logger.Sugar().Infof("GlobalHeartBeat:%s", s)
 
+}
 func Conn() (gnet.Conn, gnet.Conn) {
 	ev := engine.NewClientEvents(util.ClusterTypeGate)
 	ev.AddRouter(new(MsgModel))
@@ -56,8 +64,15 @@ func Conn() (gnet.Conn, gnet.Conn) {
 func init() {
 	glog.Init()
 }
+
 func heartBeat(conn gnet.Conn, m string) {
-	raw := protocol.Encode("💓", protocol.String, util.MethodHash(m))
+	msg := engine.ClientMsg{
+		Logic:    util.MethodHash("base"),
+		Payload:  []byte("💓"),
+		Method:   util.MethodHash(m),
+		CodeType: protocol.String,
+	}
+	raw := protocol.Encode(msg, protocol.Json, util.MethodHash("Dispatcher"))
 	for {
 		_, err := conn.Write(raw)
 		if err != nil {

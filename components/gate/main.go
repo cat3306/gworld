@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"github.com/cat3306/goworld/components/gate/router"
 	"github.com/cat3306/goworld/conf"
 	"github.com/cat3306/goworld/engine"
 	"github.com/cat3306/goworld/glog"
@@ -29,8 +28,11 @@ func main() {
 	server := GateServer{
 		Server: engine.NewEngine(config, util.ClusterTypeGate),
 	}
-	server.AddRouter(new(router.HeartBeat))
-	err = server.DispatcherInitialize()
+	server.AddRouter(
+		new(GateDispatcher).Init(&server),
+	)
+	//server.AddHandler("dispatcher", server.Dispatcher)
+	err = server.GameInitialize()
 	if err != nil {
 		panic(err)
 	}
