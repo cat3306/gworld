@@ -24,13 +24,13 @@ func (h *HeartBeat) HeartBeat(ctx *protocol.Context) {
 }
 
 func (h *HeartBeat) GlobalHeartBeat(ctx *protocol.Context) {
-	s := engine.ServerInnerMsg{}
-	err := ctx.Bind(&s)
+	s := &engine.InnerMsg{}
+	err := ctx.Bind(s)
 	//glog.Logger.Sugar().Infof("HeartBeat:%s", str)
 	if err != nil {
 		glog.Logger.Sugar().Errorf("Bind err:%s", err)
 	}
-	s.Payload = []byte("️❤️")
-	ctx.SendWithParams(s, protocol.Json, util.CallGate)
+	s.ClientMsg.Payload = []byte("️❤️")
+	ctx.SendWithParams(s, protocol.ProtoBuffer, util.CallGate)
 
 }

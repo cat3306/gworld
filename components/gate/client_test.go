@@ -66,13 +66,13 @@ func init() {
 }
 
 func heartBeat(conn gnet.Conn, m string) {
-	msg := engine.ClientMsg{
+	msg := &engine.ClientMsg{
 		Logic:    util.MethodHash("base"),
 		Payload:  []byte("💓"),
 		Method:   util.MethodHash(m),
-		CodeType: protocol.String,
+		CodeType: uint32(protocol.String),
 	}
-	raw := protocol.Encode(msg, protocol.Json, util.MethodHash("Dispatcher"))
+	raw := protocol.Encode(msg, protocol.ProtoBuffer, util.MethodHash("Dispatcher"))
 	for {
 		_, err := conn.Write(raw)
 		if err != nil {

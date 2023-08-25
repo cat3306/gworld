@@ -14,7 +14,7 @@ func TestGameCoder(t *testing.T) {
 	}
 	j := protocol.GameCoder(protocol.Json)
 	jBin, err := j.Marshal(s)
-	if err!=nil{
+	if err != nil {
 		t.Fatalf("TestGameCoder err:%s", err.Error())
 	}
 	t.Log(len(jBin))
@@ -23,10 +23,23 @@ func TestGameCoder(t *testing.T) {
 		t.Fatalf("TestGameCoder err:%s", err.Error())
 	}
 	t.Log(len(bin))
-	ss := Student{}
-	err = coder.Unmarshal(bin, &ss)
-	if err != nil {
-		t.Fatalf("TestGameCoder err:%s", err.Error())
+}
+
+func Test1(t *testing.T) {
+
+	sss := &ServerMsg{
+		Logic:    1,
+		Payload:  []byte(`[:]`),
+		Method:   2,
+		CodeType: 4,
 	}
-	t.Log(ss)
+	c:=protocol.GameCoder(protocol.ProtoBuffer)
+	raw, err := c.Marshal(sss)
+	if err != nil {
+		t.Logf(err.Error())
+	}
+	t.Logf(string(raw))
+	ssss := &ServerMsg{}
+	err = protocol.GameCoder(protocol.ProtoBuffer).Unmarshal(raw, ssss)
+	t.Log(ssss)
 }

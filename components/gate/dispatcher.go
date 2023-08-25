@@ -28,13 +28,11 @@ func (g *GateDispatcher) Dispatcher(ctx *protocol.Context) {
 		glog.Logger.Sugar().Errorf("not found logic game server,logic:%d", req.Logic)
 		return
 	}
-	s := engine.ServerInnerMsg{
-		ClientId:       ctx.Conn.ID(),
-		Payload:        req.Payload,
-		ClientCodeType: req.CodeType,
-		ClientMethod:   req.Method,
+	s := &engine.InnerMsg{
+		ClientId:  []string{ctx.Conn.ID()},
+		ClientMsg: &req,
 	}
-	c.SendSomeOne(protocol.Encode(s, protocol.Json, req.Method))
+	c.SendSomeOne(protocol.Encode(s, protocol.ProtoBuffer, req.Method))
 }
 
 func (g *GateDispatcher) HeartBeat(ctx *protocol.Context) {

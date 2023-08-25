@@ -1,0 +1,10 @@
+syntax = "proto3";
+package protocol;
+option go_package = "./";
+message ServerMsg {
+
+  uint32 Logic = 1;
+  bytes Payload = 2;
+  uint32 method = 3;
+  uint32 CodeType = 4;
+}

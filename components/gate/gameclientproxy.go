@@ -98,11 +98,13 @@ func (ev *GameClientProxy) AddHandlerUint32(hash uint32, f func(c *protocol.Cont
 }
 
 func (ev *GameClientProxy) HandleGame(ctx *protocol.Context) {
-	s := engine.ServerInnerMsg{}
-	err := ctx.Bind(&s)
+	msg := &engine.InnerMsg{}
+	err := ctx.Bind(msg)
 	if err != nil {
 		glog.Logger.Sugar().Errorf("HandleGame err:%s", err.Error())
 		return
 	}
-	ev.server.ConnMgr.SendByOne(protocol.Encode(s.Payload, s.ClientCodeType, s.ClientMethod), s.ClientId)
+	glog.Logger.Sugar().Infof("l:%s", string(ctx.Payload))
+	bin := protocol.Encode(msg.ClientMsg.Payload, protocol.CodeType(msg.ClientMsg.CodeType), msg.ClientMsg.Method)
+	ev.server.ConnMgr.SendBySomeone(bin, msg.ClientId)
 }

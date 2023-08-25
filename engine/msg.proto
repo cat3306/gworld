@@ -1,0 +1,15 @@
+syntax = "proto3";
+package engine;
+option go_package = "./";
+
+message ClientMsg {
+
+  uint32 Logic = 1;
+  bytes Payload = 2;
+  uint32 Method = 3;
+  uint32 CodeType = 4;
+}
+message InnerMsg {
+  repeated string ClientId = 1;
+  ClientMsg ClientMsg = 2;
+}
