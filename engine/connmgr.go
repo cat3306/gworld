@@ -27,6 +27,12 @@ func (c *ConnManager) Remove(id string) {
 	defer c.locker.Unlock()
 	delete(c.connections, id)
 }
+func (c *ConnManager) Get(id string) (bool, gnet.Conn) {
+	c.locker.Lock()
+	defer c.locker.Unlock()
+	con, ok := c.connections[id]
+	return ok, con
+}
 func (c *ConnManager) Broadcast(raw []byte) {
 	c.locker.RLock()
 	defer c.locker.RUnlock()

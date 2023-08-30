@@ -2,6 +2,7 @@ package protocol
 
 import (
 	"github.com/cat3306/goworld/glog"
+	"github.com/cat3306/goworld/util"
 	"sync"
 
 	"github.com/panjf2000/gnet/v2"
@@ -53,4 +54,9 @@ func (c *Context) AsyncWrite(raw []byte) error {
 		BUFFERPOOL.Put(raw)
 		return nil
 	})
+}
+
+func (c *Context) CheckClientAuth() bool {
+	ok := c.Conn.GetProperty(util.ClientAuth)
+	return ok != ""
 }

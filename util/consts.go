@@ -8,16 +8,11 @@ var (
 )
 
 const (
-	ClusterTypeGate       ClusterType = 0
-	ClusterTypeDispatcher ClusterType = 1
-	ClusterTypeGame       ClusterType = 2
+	ClusterTypeGate ClusterType = 0
+	ClusterTypeGame ClusterType = 1
 )
 const (
 	ChanPacketSize = 10000
-)
-const (
-	DispatcherConnMgrKey = "DispatcherConnMgrKey"
-	GameConnMgrKey       = "GameConnMgrKey"
 )
 const (
 	GateClientMgrKey      = "GateClientMgrKey"
@@ -27,8 +22,6 @@ const (
 func (c ClusterType) String() string {
 	if c == ClusterTypeGate {
 		return "gate"
-	} else if c == ClusterTypeDispatcher {
-		return "dispatcher"
 	} else if c == ClusterTypeGame {
 		return "game"
 	}
@@ -36,5 +29,5 @@ func (c ClusterType) String() string {
 }
 
 const (
-	MethodSetDispatcherType = "SetDispatcherType"
+	ClientAuth = "auth"
 )

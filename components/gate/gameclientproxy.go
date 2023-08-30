@@ -17,6 +17,8 @@ type GameClientProxy struct {
 	server        *GateServer
 	connMgrs      map[uint32]*engine.ConnManager
 	engine.BaseRouter
+	tryConnectChan chan *engine.TryConnectMsg
+	gClient        *gnet.Client
 }
 
 func (ev *GameClientProxy) Init(interface{}) engine.IRouter {
@@ -24,18 +26,24 @@ func (ev *GameClientProxy) Init(interface{}) engine.IRouter {
 }
 func NewGameClientProxy() *GameClientProxy {
 	return &GameClientProxy{
-		ConnMgr:       engine.NewConnManager(),
-		handlerMgr:    engine.NewHandlerManager(),
-		clientCtxChan: make(chan *protocol.Context, util.ChanPacketSize),
-		connMgrs:      map[uint32]*engine.ConnManager{},
+		ConnMgr:        engine.NewConnManager(),
+		handlerMgr:     engine.NewHandlerManager(),
+		clientCtxChan:  make(chan *protocol.Context, util.ChanPacketSize),
+		connMgrs:       map[uint32]*engine.ConnManager{},
+		tryConnectChan: make(chan *engine.TryConnectMsg, 1024),
 	}
 }
 func (ev *GameClientProxy) SetServer(g *GateServer) *GameClientProxy {
 	ev.server = g
 	return ev
 }
+func (ev *GameClientProxy) SetGClient(c *gnet.Client) *GameClientProxy {
+	ev.gClient = c
+	return ev
+}
 func (ev *GameClientProxy) OnBoot(e gnet.Engine) (action gnet.Action) {
 	go ev.mainRoutine()
+	go ev.tryConnect()
 	return
 }
 func (ev *GameClientProxy) OnOpen(c gnet.Conn) ([]byte, gnet.Action) {
@@ -52,6 +60,17 @@ func (ev *GameClientProxy) OnClose(c gnet.Conn, err error) gnet.Action {
 	}
 	glog.Logger.Sugar().Infof("cid:%s close,reason:%s", c.ID(), reason)
 	ev.ConnMgr.Remove(c.ID())
+	for _, v := range ev.connMgrs {
+		ok, _ := v.Get(c.ID())
+		if ok {
+			v.Remove(c.ID())
+			break
+		}
+	}
+	ev.tryConnectChan <- &engine.TryConnectMsg{
+		NetWork: c.RemoteAddr().Network(),
+		Addr:    c.RemoteAddr().String(),
+	}
 	return gnet.None
 }
 
@@ -104,7 +123,17 @@ func (ev *GameClientProxy) HandleGame(ctx *protocol.Context) {
 		glog.Logger.Sugar().Errorf("HandleGame err:%s", err.Error())
 		return
 	}
-	glog.Logger.Sugar().Infof("l:%s", string(ctx.Payload))
 	bin := protocol.Encode(msg.ClientMsg.Payload, protocol.CodeType(msg.ClientMsg.CodeType), msg.ClientMsg.Method)
 	ev.server.ConnMgr.SendBySomeone(bin, msg.ClientId)
+}
+
+func (ev *GameClientProxy) tryConnect() {
+	for msg := range ev.tryConnectChan {
+		_, err := ev.gClient.Dial(msg.NetWork, msg.Addr)
+		if err != nil {
+			glog.Logger.Sugar().Errorf("tryConnect err:%s,msg:%+v", err.Error(), msg)
+			time.Sleep(time.Second)
+			ev.tryConnectChan <- msg
+		}
+	}
 }

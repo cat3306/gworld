@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"github.com/cat3306/goworld/components/gate/router"
 	"github.com/cat3306/goworld/conf"
 	"github.com/cat3306/goworld/engine"
 	"github.com/cat3306/goworld/glog"
@@ -30,6 +31,7 @@ func main() {
 	}
 	server.AddRouter(
 		new(GateDispatcher).Init(&server),
+		new(router.Auth),
 	)
 	//server.AddHandler("dispatcher", server.Dispatcher)
 	err = server.GameInitialize()

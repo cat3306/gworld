@@ -40,14 +40,16 @@ func (g *GateServer) SetLogic(ctx *protocol.Context) {
 		return
 	}
 	logicHash := util.MethodHash(logic)
-	if _, ok := g.gameClientProxy.connMgrs[logicHash]; ok {
-		glog.Logger.Sugar().Errorf("register repeated logic")
-		return
+	if mgr, ok := g.gameClientProxy.connMgrs[logicHash]; ok {
+		mgr.Add(ctx.Conn)
+		glog.Logger.Sugar().Infof("exist logic:%s", logic)
+	} else {
+		mgr = engine.NewConnManager()
+		mgr.Add(ctx.Conn)
+		g.gameClientProxy.connMgrs[logicHash] = mgr
+		glog.Logger.Sugar().Infof("set logic from game,logic:%s", logic)
 	}
-	mgr := engine.NewConnManager()
-	mgr.Add(ctx.Conn)
-	glog.Logger.Sugar().Infof("set logic from game,logic:%s", logic)
-	g.gameClientProxy.connMgrs[logicHash] = mgr
+
 }
 
 func (g *GateServer) GameInitialize() error {
@@ -60,11 +62,12 @@ func (g *GateServer) GameInitialize() error {
 	if err != nil {
 		return err
 	}
+	g.gameClientProxy.SetGClient(cli)
 	list := conf.GlobalConf.ClusterList(util.ClusterTypeGame)
 	for _, v := range list {
-		_, err = cli.Dial("tcp", fmt.Sprintf("%s:%d", v.Ip, v.Port))
-		if err != nil {
-			return err
+		g.gameClientProxy.tryConnectChan <- &engine.TryConnectMsg{
+			NetWork: "tcp",
+			Addr:    fmt.Sprintf("%s:%d", v.Ip, v.Port),
 		}
 	}
 	return cli.Start()

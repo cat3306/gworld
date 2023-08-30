@@ -17,6 +17,11 @@ func (g *GateDispatcher) Init(v interface{}) engine.IRouter {
 }
 
 func (g *GateDispatcher) Dispatcher(ctx *protocol.Context) {
+	if !ctx.CheckClientAuth() {
+		glog.Logger.Sugar().Warnf("authentication required:%s", ctx.Conn.ID())
+		ctx.Conn.Close()
+		return
+	}
 	req := engine.ClientMsg{}
 	err := ctx.Bind(&req)
 	glog.Logger.Sugar().Infof("GlobalHeartBeat:%s", req.Payload)

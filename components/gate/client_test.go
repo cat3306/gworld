@@ -84,8 +84,22 @@ func heartBeat(conn gnet.Conn, m string) {
 }
 func TestHeartBeat(t *testing.T) {
 	_, conn1 := Conn()
+	auth(conn1)
 	//select {}
 	//go heartBeat(conn, false)
 	go heartBeat(conn1, "GlobalHeartBeat")
 	select {}
+}
+
+func TestAuth(t *testing.T) {
+	_, conn1 := Conn()
+	auth(conn1)
+	select {
+
+	}
+
+}
+func auth(c gnet.Conn) {
+	raw := protocol.Encode("1", protocol.String, util.MethodHash("Auth"))
+	c.Write(raw)
 }
