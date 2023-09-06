@@ -37,7 +37,7 @@ func (g *GameServer) OnOpen(c gnet.Conn) (out []byte, action gnet.Action) {
 	cId := util.GenConnId()
 	c.SetId(cId)
 	g.ConnMgr.Add(c)
-	glog.Logger.Sugar().Infof("clinet conn cid:%s connect", c.ID())
+	glog.Logger.Sugar().Infof("gate clinet conn cid:%s connect", c.ID())
 	out = protocol.Encode(g.Config.Logic, protocol.String, util.MethodHash("SetLogic"))
 	return out, gnet.None
 }

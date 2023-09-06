@@ -3,8 +3,10 @@ package util
 type ClusterType int
 
 var (
-	CallGate   = MethodHash("CallClient")
 	CallClient = MethodHash("CallClient")
+	//CallClient        = MethodHash("CallClient")
+	SetClientProperty = MethodHash("SetClientProperty")
+	ClientOnConnect   = MethodHash("OnConnect")
 )
 
 const (
@@ -29,5 +31,9 @@ func (c ClusterType) String() string {
 }
 
 const (
-	ClientAuth = "auth"
+	ClientAuth = "ClientAuth"
+)
+const (
+	RoomId   = "RoomId"
+	ClientId = "ClientId"
 )

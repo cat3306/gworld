@@ -31,7 +31,7 @@ func main() {
 	}
 	server.AddRouter(
 		new(GateDispatcher).Init(&server),
-		new(router.Auth),
+		new(router.Auth).Init(nil),
 	)
 	//server.AddHandler("dispatcher", server.Dispatcher)
 	err = server.GameInitialize()

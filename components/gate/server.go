@@ -13,9 +13,45 @@ import (
 
 type GateServer struct {
 	*engine.Server
-	gameClientProxy *GameClientProxy
+	gameClientProxy          *GameClientProxy
+	innerGameServerBroadcast uint32
 }
 
+func (g *GateServer) OnClose(c gnet.Conn, err error) (action gnet.Action) {
+	reason := ""
+	if err != nil {
+		reason = err.Error()
+	}
+	glog.Logger.Sugar().Infof("cid:%s close,reason:%s", c.ID(), reason)
+	g.ConnMgr.Remove(c.ID())
+	if g.innerGameServerBroadcast == 0 {
+		g.innerGameServerBroadcast = util.MethodHash("InnerOnBroadcast")
+	}
+	ctx := &protocol.Context{
+		Proto: g.innerGameServerBroadcast,
+		Conn:  c,
+	}
+	ctx.SetProperty("Proto", util.MethodHash("OnDisconnect"))
+	g.ClientCtxChan <- ctx
+	return gnet.None
+}
+
+func (g *GateServer) OnOpen(c gnet.Conn) (out []byte, action gnet.Action) {
+	cId := util.GenConnId()
+	c.SetId(cId)
+	g.ConnMgr.Add(c)
+	glog.Logger.Sugar().Infof("clinet conn cid:%s connect", c.ID())
+	if g.innerGameServerBroadcast == 0 {
+		g.innerGameServerBroadcast = util.MethodHash("InnerOnBroadcast")
+	}
+	ctx := &protocol.Context{
+		Proto: g.innerGameServerBroadcast,
+		Conn:  c,
+	}
+	ctx.SetProperty("Proto", util.MethodHash("OnConnect"))
+	g.ClientCtxChan <- ctx
+	return out, gnet.None
+}
 func (g *GateServer) OnTraffic(c gnet.Conn) gnet.Action {
 	context, err := protocol.Decode(c)
 	if err != nil {
@@ -31,33 +67,9 @@ func (g *GateServer) OnTraffic(c gnet.Conn) gnet.Action {
 	return gnet.None
 }
 
-func (g *GateServer) SetLogic(ctx *protocol.Context) {
-	var logic string
-
-	err := ctx.Bind(&logic)
-	if err != nil {
-		glog.Logger.Sugar().Errorf("SetLogic err:%s", err.Error())
-		return
-	}
-	logicHash := util.MethodHash(logic)
-	if mgr, ok := g.gameClientProxy.connMgrs[logicHash]; ok {
-		mgr.Add(ctx.Conn)
-		glog.Logger.Sugar().Infof("exist logic:%s", logic)
-	} else {
-		mgr = engine.NewConnManager()
-		mgr.Add(ctx.Conn)
-		g.gameClientProxy.connMgrs[logicHash] = mgr
-		glog.Logger.Sugar().Infof("set logic from game,logic:%s", logic)
-	}
-
-}
-
 func (g *GateServer) GameInitialize() error {
 	g.gameClientProxy = NewGameClientProxy().SetServer(g)
-	//AddHandler("GlobalHeartBeat", router.GlobalHeartBeat2).
-	g.gameClientProxy.
-		AddHandler("SetLogic", g.SetLogic).
-		AddHandlerUint32(util.CallGate, g.gameClientProxy.HandleGame)
+	g.gameClientProxy.AddRouter(new(GameClientProxyRouter).Init(g))
 	cli, err := gnet.NewClient(g.gameClientProxy)
 	if err != nil {
 		return err
@@ -67,7 +79,7 @@ func (g *GateServer) GameInitialize() error {
 	for _, v := range list {
 		g.gameClientProxy.tryConnectChan <- &engine.TryConnectMsg{
 			NetWork: "tcp",
-			Addr:    fmt.Sprintf("%s:%d", v.Ip, v.Port),
+			Addr:    fmt.Sprintf("%s:%d", v.OuterIp, v.Port),
 		}
 	}
 	return cli.Start()

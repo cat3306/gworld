@@ -1,4 +1,8 @@
 {
+  "auth_config": {
+    "is_auth": true,
+    "private_key_path": "/Users/joker/code/go/src/github.com/cat3306/goworld/cert/private_key.pem"
+  },
   "servers": {
     "0": [
       {
@@ -8,7 +12,8 @@
         "max_conn": 1000,
         "conn_write_buffer": 1048576,
         "conn_read_buffer": 1048576,
-        "kv": {}
+        "kv": {},
+        "outer_ip": ""
       }
     ],
     "1": [
@@ -19,7 +24,8 @@
         "max_conn": 1000,
         "conn_write_buffer": 1048576,
         "conn_read_buffer": 1048576,
-        "kv": {}
+        "kv": {},
+        "outer_ip": "127.0.0.1"
       }
     ]
   }

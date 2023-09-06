@@ -24,19 +24,25 @@ func (g *GateDispatcher) Dispatcher(ctx *protocol.Context) {
 	}
 	req := engine.ClientMsg{}
 	err := ctx.Bind(&req)
-	glog.Logger.Sugar().Infof("GlobalHeartBeat:%s", req.Payload)
 	if err != nil {
 		glog.Logger.Sugar().Errorf("Bind err:%s", err)
 	}
-	c, ok := g.gate.gameClientProxy.connMgrs[req.Logic]
+
+	c, ok := g.gate.gameClientProxy.logicMgr.GetByLogic(req.Logic)
 	if !ok {
 		glog.Logger.Sugar().Errorf("not found logic game server,logic:%d", req.Logic)
 		return
 	}
-	s := &engine.InnerMsg{
-		ClientId:  []string{ctx.Conn.ID()},
-		ClientMsg: &req,
+	if c.Len() == 0 {
+		glog.Logger.Sugar().Errorf("not found game server,logic:%d", req.Logic)
+		return
 	}
+	s := &engine.InnerMsg{
+		ClientIds:  []string{ctx.Conn.ID()},
+		ClientMsg:  &req,
+		Properties: map[string]string{},
+	}
+	//glog.Logger.Info("haha")
 	c.SendSomeOne(protocol.Encode(s, protocol.ProtoBuffer, req.Method))
 }
 
@@ -48,4 +54,19 @@ func (g *GateDispatcher) HeartBeat(ctx *protocol.Context) {
 		glog.Logger.Sugar().Errorf("Bind err:%s", err)
 	}
 	ctx.Send("❤️")
+}
+func (g *GateDispatcher) InnerOnBroadcast(ctx *protocol.Context) {
+	v, ok := ctx.GetProperty("Proto")
+	if !ok {
+		glog.Logger.Sugar().Errorf("not found Proto")
+		return
+	}
+	pro := v.(uint32)
+	raw := protocol.Encode(&engine.InnerMsg{
+		ClientIds: []string{ctx.Conn.ID()},
+		ClientMsg: &engine.ClientMsg{
+			Payload: ctx.Payload,
+		},
+	}, protocol.ProtoBuffer, pro)
+	g.gate.gameClientProxy.logicMgr.Broadcast(raw)
 }

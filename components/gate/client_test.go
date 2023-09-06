@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/cat3306/goworld/engine"
 	"github.com/cat3306/goworld/glog"
@@ -27,6 +28,7 @@ func (h *MsgModel) HeartBeat(ctx *protocol.Context) {
 		glog.Logger.Sugar().Errorf("Bind err:%s", err)
 	}
 }
+
 func (h *MsgModel) GlobalHeartBeat(ctx *protocol.Context) {
 	s := ""
 	err := ctx.Bind(&s)
@@ -35,6 +37,22 @@ func (h *MsgModel) GlobalHeartBeat(ctx *protocol.Context) {
 	}
 	glog.Logger.Sugar().Infof("GlobalHeartBeat:%s", s)
 
+}
+func (h *MsgModel) Auth(ctx *protocol.Context) {
+	str := ""
+	err := ctx.Bind(&str)
+	glog.Logger.Sugar().Infof("Auth:%s,id:%s", str, ctx.Conn.ID())
+	if err != nil {
+		glog.Logger.Sugar().Errorf("Bind err:%s", err)
+	}
+}
+func (h *MsgModel) CreateRoom(ctx *protocol.Context) {
+	str := ""
+	err := ctx.Bind(&str)
+	glog.Logger.Sugar().Infof("Auth:%s,id:%s", str, ctx.Conn.ID())
+	if err != nil {
+		glog.Logger.Sugar().Errorf("Bind err:%s", err)
+	}
 }
 func Conn() (gnet.Conn, gnet.Conn) {
 	ev := engine.NewClientEvents(util.ClusterTypeGate)
@@ -79,7 +97,7 @@ func heartBeat(conn gnet.Conn, m string) {
 			fmt.Println("write error err ", err)
 			return
 		}
-		time.Sleep(1000 * time.Millisecond)
+		time.Sleep(1 * time.Millisecond)
 	}
 }
 func TestHeartBeat(t *testing.T) {
@@ -94,12 +112,40 @@ func TestHeartBeat(t *testing.T) {
 func TestAuth(t *testing.T) {
 	_, conn1 := Conn()
 	auth(conn1)
-	select {
-
-	}
+	select {}
 
 }
 func auth(c gnet.Conn) {
 	raw := protocol.Encode("1", protocol.String, util.MethodHash("Auth"))
 	c.Write(raw)
+}
+func TestCreateRoom(t *testing.T) {
+	_, conn1 := Conn()
+	auth(conn1)
+	time.Sleep(time.Second)
+	createRoom(conn1)
+	select {}
+}
+
+type CreateRoomReq struct {
+	Pwd       string `json:"Pwd"`
+	MaxNum    int    `json:"MaxNum"`    //最大人数
+	JoinState bool   `json:"JoinState"` //是否能加入
+}
+
+func createRoom(conn gnet.Conn) {
+	req := CreateRoomReq{
+		Pwd:       "123",
+		MaxNum:    10,
+		JoinState: true,
+	}
+	reqR, _ := json.Marshal(req)
+	msg := &engine.ClientMsg{
+		Logic:    util.MethodHash("base"),
+		Payload:  reqR,
+		Method:   util.MethodHash("CreateRoom"),
+		CodeType: uint32(protocol.Json),
+	}
+	raw := protocol.Encode(msg, protocol.ProtoBuffer, util.MethodHash("Dispatcher"))
+	fmt.Println(conn.Write(raw))
 }

@@ -15,7 +15,7 @@ type GameClientProxy struct {
 	clientCtxChan chan *protocol.Context
 	ConnMgr       *engine.ConnManager
 	server        *GateServer
-	connMgrs      map[uint32]*engine.ConnManager
+	logicMgr      *engine.LogicConnMgr
 	engine.BaseRouter
 	tryConnectChan chan *engine.TryConnectMsg
 	gClient        *gnet.Client
@@ -29,7 +29,7 @@ func NewGameClientProxy() *GameClientProxy {
 		ConnMgr:        engine.NewConnManager(),
 		handlerMgr:     engine.NewHandlerManager(),
 		clientCtxChan:  make(chan *protocol.Context, util.ChanPacketSize),
-		connMgrs:       map[uint32]*engine.ConnManager{},
+		logicMgr:       engine.NewLogicConnMgr(),
 		tryConnectChan: make(chan *engine.TryConnectMsg, 1024),
 	}
 }
@@ -60,13 +60,7 @@ func (ev *GameClientProxy) OnClose(c gnet.Conn, err error) gnet.Action {
 	}
 	glog.Logger.Sugar().Infof("cid:%s close,reason:%s", c.ID(), reason)
 	ev.ConnMgr.Remove(c.ID())
-	for _, v := range ev.connMgrs {
-		ok, _ := v.Get(c.ID())
-		if ok {
-			v.Remove(c.ID())
-			break
-		}
-	}
+	ev.logicMgr.Remove(c.ID())
 	ev.tryConnectChan <- &engine.TryConnectMsg{
 		NetWork: c.RemoteAddr().Network(),
 		Addr:    c.RemoteAddr().String(),
@@ -103,7 +97,7 @@ func (ev *GameClientProxy) mainRoutine() {
 
 func (ev *GameClientProxy) AddRouter(routers ...engine.IRouter) *GameClientProxy {
 	for _, v := range routers {
-		ev.handlerMgr.RegisterRouter(v.Init(nil))
+		ev.handlerMgr.RegisterRouter(v)
 	}
 	return ev
 }
@@ -116,17 +110,6 @@ func (ev *GameClientProxy) AddHandlerUint32(hash uint32, f func(c *protocol.Cont
 	return ev
 }
 
-func (ev *GameClientProxy) HandleGame(ctx *protocol.Context) {
-	msg := &engine.InnerMsg{}
-	err := ctx.Bind(msg)
-	if err != nil {
-		glog.Logger.Sugar().Errorf("HandleGame err:%s", err.Error())
-		return
-	}
-	bin := protocol.Encode(msg.ClientMsg.Payload, protocol.CodeType(msg.ClientMsg.CodeType), msg.ClientMsg.Method)
-	ev.server.ConnMgr.SendBySomeone(bin, msg.ClientId)
-}
-
 func (ev *GameClientProxy) tryConnect() {
 	for msg := range ev.tryConnectChan {
 		_, err := ev.gClient.Dial(msg.NetWork, msg.Addr)
@@ -136,4 +119,55 @@ func (ev *GameClientProxy) tryConnect() {
 			ev.tryConnectChan <- msg
 		}
 	}
+}
+
+type GameClientProxyRouter struct {
+	server *GateServer
+}
+
+func (g *GameClientProxyRouter) Init(v interface{}) engine.IRouter {
+	g.server = v.(*GateServer)
+	return g
+}
+func (g *GameClientProxyRouter) SetClientProperty(ctx *protocol.Context) {
+	req := engine.InnerMsg{}
+	err := ctx.Bind(&req)
+	if err != nil {
+		glog.Logger.Sugar().Errorf("Bind err:%s", err)
+		return
+	}
+	for _, v := range req.ClientIds {
+		ok, conn := g.server.ConnMgr.Get(v)
+		if ok {
+			for k, val := range req.Properties {
+				conn.SetProperty(k, val)
+			}
+			glog.Logger.Info(conn.GetProperty(util.RoomId))
+		} else {
+			glog.Logger.Sugar().Errorf("not found clinet id %s", v)
+		}
+	}
+}
+func (g *GameClientProxyRouter) SetLogic(ctx *protocol.Context) {
+	var logic string
+
+	err := ctx.Bind(&logic)
+	if err != nil {
+		glog.Logger.Sugar().Errorf("SetLogic err:%s", err.Error())
+		return
+	}
+	logicHash := util.MethodHash(logic)
+	g.server.gameClientProxy.logicMgr.Add(logicHash, ctx.Conn)
+	glog.Logger.Sugar().Infof("set logic from game,logic:%s", logic)
+}
+
+func (g *GameClientProxyRouter) CallClient(ctx *protocol.Context) {
+	msg := &engine.InnerMsg{}
+	err := ctx.Bind(msg)
+	if err != nil {
+		glog.Logger.Sugar().Errorf("HandleGame err:%s", err.Error())
+		return
+	}
+	bin := protocol.Encode(msg.ClientMsg.Payload, protocol.CodeType(msg.ClientMsg.CodeType), msg.ClientMsg.Method)
+	g.server.ConnMgr.SendBySomeone(bin, msg.ClientIds)
 }

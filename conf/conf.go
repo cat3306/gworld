@@ -9,8 +9,13 @@ var (
 	GlobalConf ClusterConf
 )
 
+type AuthConfig struct {
+	IsAuth         bool   `json:"is_auth"` //是否客户端验签
+	PrivateKeyPath string `json:"private_key_path"`
+}
 type ClusterConf struct {
-	Servers map[util.ClusterType][]ServerConf `json:"servers"`
+	AuthConfig AuthConfig                        `json:"auth_config"`
+	Servers    map[util.ClusterType][]ServerConf `json:"servers"`
 }
 
 func (s *ClusterConf) Select(t util.ClusterType, index int) *ServerConf {
@@ -37,12 +42,13 @@ func (s *ClusterConf) ClusterIdxs(t util.ClusterType) (idx []int) {
 
 type ServerConf struct {
 	Logic           string                 `json:"logic"`
-	Ip              string                 `json:"host"`     //ip
+	Host            string                 `json:"host"`     //ip
 	Port            int                    `json:"tcp_port"` //port
 	MaxConn         int                    `json:"max_conn"` //最大连接数
 	ConnWriteBuffer int                    `json:"conn_write_buffer"`
 	ConnReadBuffer  int                    `json:"conn_read_buffer"`
 	KV              map[string]interface{} `json:"kv"`
+	OuterIp         string                 `json:"outer_ip"`
 }
 
 func Load(file string) error {

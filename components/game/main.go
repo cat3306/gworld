@@ -29,7 +29,11 @@ func main() {
 	server := GameServer{
 		Server: engine.NewEngine(config, util.ClusterTypeGame),
 	}
-	server.AddRouter(new(router.HeartBeat))
+	server.AddRouter(
+		new(router.HeartBeat),
+		new(router.RoomMgr).Init(nil),
+		new(router.ClientMgr).Init(nil),
+	)
 
 	server.Run()
 }
