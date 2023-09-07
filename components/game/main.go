@@ -33,6 +33,7 @@ func main() {
 		new(router.HeartBeat),
 		new(router.RoomMgr).Init(nil),
 		new(router.ClientMgr).Init(nil),
+		new(router.PlayerMgr).Init(nil),
 	)
 
 	server.Run()
