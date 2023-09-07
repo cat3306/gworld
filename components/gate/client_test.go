@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/cat3306/gocommon/cryptoutil"
 	"github.com/cat3306/goworld/engine"
 	"github.com/cat3306/goworld/glog"
 	"github.com/cat3306/goworld/protocol"
@@ -116,8 +117,20 @@ func TestAuth(t *testing.T) {
 
 }
 func auth(c gnet.Conn) {
-	raw := protocol.Encode("1", protocol.String, util.MethodHash("Auth"))
-	c.Write(raw)
+	var req struct {
+		CipherText []byte `json:"CipherText"`
+		Text       string `json:"Text"`
+	}
+	req.Text = "life is short"
+	pubKey, err := cryptoutil.RawRSAKey("./public_key.pem")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	req.CipherText = cryptoutil.RsaEncrypt([]byte(req.Text), pubKey)
+	raw:= protocol.Encode(req, protocol.Json, util.MethodHash("Auth"))
+	_, err = c.Write(raw)
+	fmt.Println(err)
 }
 func TestCreateRoom(t *testing.T) {
 	_, conn1 := Conn()

@@ -35,7 +35,7 @@ func (h *Auth) Auth(ctx *protocol.Context) {
 		glog.Logger.Sugar().Errorf("param err:%s", err.Error())
 		return
 	}
-	//glog.Logger.Sugar().Errorf("req.CipherText:%s,c.rawPrivateKey:%s", req.CipherText, c.rawPrivateKey)
+	glog.Logger.Sugar().Infof("cid:%s auth",ctx.Conn.ID())
 	text := cryptoutil.RsaDecrypt(req.CipherText, h.rawPrivateKey)
 	if string(text) != req.Text {
 		glog.Logger.Sugar().Errorf("认证失败!")
