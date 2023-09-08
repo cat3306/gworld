@@ -7,6 +7,7 @@
 package engine
 
 import (
+	"github.com/cat3306/goworld/protocol"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -31,6 +32,9 @@ type ClientMsg struct {
 	CodeType uint32 `protobuf:"varint,4,opt,name=CodeType,proto3" json:"CodeType,omitempty"`
 }
 
+func (x *ClientMsg) Bind(v interface{}) error {
+	return protocol.GameCoder(protocol.CodeType(x.CodeType)).Unmarshal(x.Payload, v)
+}
 func (x *ClientMsg) Reset() {
 	*x = ClientMsg{}
 	if protoimpl.UnsafeEnabled {

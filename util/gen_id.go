@@ -24,7 +24,7 @@ func GenId(n int) string {
 		cache >>= letterIdxBits
 		remain--
 	}
-	return string(b)
+	return BytesToString(b)
 }
 func GenConnId() string {
 	return GenId(9)

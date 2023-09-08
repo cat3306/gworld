@@ -65,13 +65,3 @@ func (c *ClientMgr) GetInfo(id string) (*GameClient, bool) {
 	v, o := c.clients[id]
 	return v, o
 }
-
-func (c *ClientMgr) ObjectMove(ctx *protocol.Context) {
-	msg := &engine.InnerMsg{}
-	err := ctx.Bind(msg)
-	if err != nil {
-		glog.Logger.Sugar().Errorf("ctx.Bind err:%s", err.Error())
-		return
-	}
-	glog.Logger.Sugar().Infof("%s",string(msg.ClientMsg.Payload))
-}

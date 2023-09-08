@@ -1,4 +1,4 @@
-package obj
+package gameobject
 
 type Vector3 struct {
 	X float32
