@@ -103,9 +103,6 @@ func (h *HandlerManager) exeSyncHandler(ctx *protocol.Context) error {
 func (h *HandlerManager) exeAsyncHandler(ctx *protocol.Context) error {
 	f := h.GetGoHandler(ctx.Proto)
 	if f != nil {
-		newBuffer := protocol.BUFFERPOOL.Get(uint32(len(ctx.Payload)))
-		copy(*newBuffer, ctx.Payload)
-		ctx.Payload = *newBuffer
 		err := h.GPool.Submit(func() {
 			f(ctx, struct{}{})
 		})

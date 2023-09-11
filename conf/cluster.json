@@ -25,7 +25,7 @@
         "conn_write_buffer": 1048576,
         "conn_read_buffer": 1048576,
         "kv": {},
-        "outer_ip": "127.0.0.1"
+        "outer_ip": "localhost"
       }
     ]
   }

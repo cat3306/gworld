@@ -9,6 +9,7 @@ import (
 	"github.com/cat3306/goworld/protocol"
 	"github.com/cat3306/goworld/util"
 	"github.com/panjf2000/gnet/v2"
+	"github.com/valyala/bytebufferpool"
 	"os"
 	"testing"
 	"time"
@@ -91,9 +92,10 @@ func heartBeat(conn gnet.Conn, m string) {
 		Method:   util.MethodHash(m),
 		CodeType: uint32(protocol.String),
 	}
-	raw := protocol.Encode(msg, protocol.ProtoBuffer, util.MethodHash("Dispatcher"))
+	buffer := protocol.Encode(msg, protocol.ProtoBuffer, util.MethodHash("Dispatcher"))
+	defer bytebufferpool.Put(buffer)
 	for {
-		_, err := conn.Write(raw)
+		_, err := conn.Write(buffer.Bytes())
 		if err != nil {
 			fmt.Println("write error err ", err)
 			return
@@ -128,8 +130,9 @@ func auth(c gnet.Conn) {
 		return
 	}
 	req.CipherText = cryptoutil.RsaEncrypt([]byte(req.Text), pubKey)
-	raw:= protocol.Encode(req, protocol.Json, util.MethodHash("Auth"))
-	_, err = c.Write(raw)
+	buffer := protocol.Encode(req, protocol.Json, util.MethodHash("Auth"))
+	_, err = c.Write(buffer.Bytes())
+	defer bytebufferpool.Put(buffer)
 	fmt.Println(err)
 }
 func TestCreateRoom(t *testing.T) {
@@ -159,6 +162,8 @@ func createRoom(conn gnet.Conn) {
 		Method:   util.MethodHash("CreateRoom"),
 		CodeType: uint32(protocol.Json),
 	}
-	raw := protocol.Encode(msg, protocol.ProtoBuffer, util.MethodHash("Dispatcher"))
-	fmt.Println(conn.Write(raw))
+	buffer := protocol.Encode(msg, protocol.ProtoBuffer, util.MethodHash("Dispatcher"))
+	defer buffer.Bytes()
+	fmt.Println(conn.Write(buffer.Bytes()))
+
 }

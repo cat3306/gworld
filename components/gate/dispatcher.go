@@ -49,10 +49,11 @@ func (g *GateDispatcher) Dispatcher(ctx *protocol.Context) {
 func (g *GateDispatcher) HeartBeat(ctx *protocol.Context) {
 	str := ""
 	err := ctx.Bind(&str)
-	glog.Logger.Sugar().Infof("HeartBeat:%s", str)
+	//glog.Logger.Sugar().Infof("HeartBeat:%s", str)
 	if err != nil {
 		glog.Logger.Sugar().Errorf("Bind err:%s", err)
 	}
+	//glog.Logger.Sugar().Infof("%v", ctx.CodeType)
 	ctx.Send("❤️")
 }
 func (g *GateDispatcher) InnerOnBroadcast(ctx *protocol.Context) {
@@ -62,11 +63,15 @@ func (g *GateDispatcher) InnerOnBroadcast(ctx *protocol.Context) {
 		return
 	}
 	pro := v.(uint32)
-	raw := protocol.Encode(&engine.InnerMsg{
+	var payload []byte
+	if ctx.Payload != nil {
+		payload = ctx.Payload.Bytes()
+	}
+	buffer := protocol.Encode(&engine.InnerMsg{
 		ClientIds: []string{ctx.Conn.ID()},
 		ClientMsg: &engine.ClientMsg{
-			Payload: ctx.Payload,
+			Payload: payload,
 		},
 	}, protocol.ProtoBuffer, pro)
-	g.gate.gameClientProxy.logicMgr.Broadcast(raw)
+	g.gate.gameClientProxy.logicMgr.Broadcast(buffer)
 }

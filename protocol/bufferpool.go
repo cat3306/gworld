@@ -1,6 +1,7 @@
 package protocol
 
 import (
+	"github.com/cat3306/goworld/glog"
 	"math"
 	"sync"
 )
@@ -43,9 +44,12 @@ func (b *BufferPool) Put(bs []byte) {
 	p := b.pool[uint32(cap(bs))]
 	if p != nil {
 		p.Put(&bs)
+	}else{
+		glog.Logger.Sugar().Infof("asd")
 	}
 }
 func (b *BufferPool) Get(l uint32) *[]byte {
+
 	offset := int(math.Log2(float64(b.capSlice[0])))
 
 	index := int(math.Ceil(math.Log2(float64(l))))
@@ -64,4 +68,8 @@ func (b *BufferPool) Get(l uint32) *[]byte {
 	capSize := b.capSlice[index]
 	p := b.pool[capSize]
 	return p.Get().(*[]byte)
+}
+
+func t(){
+
 }

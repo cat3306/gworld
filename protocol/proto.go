@@ -3,6 +3,7 @@ package protocol
 import (
 	"encoding/binary"
 	"errors"
+	"github.com/valyala/bytebufferpool"
 	"io"
 
 	"github.com/panjf2000/gnet/v2"
@@ -55,41 +56,45 @@ func Decode(c gnet.Conn) (*Context, error) {
 	if err != nil {
 		return nil, err
 	}
-	payload := make([]byte, len(buf))
-	copy(payload, buf)
+	buffer := bytebufferpool.Get()
+	_, _ = buffer.Write(buf)
+	//payload := make([]byte, len(buf))
+	//copy(payload, buf)
 	packet := &Context{
-		Payload:  payload,
+		Payload:  buffer,
 		CodeType: CodeType(codeType),
 		Proto:    protocol,
 		Conn:     c,
 	}
 	return packet, nil
 }
-func Encode(v interface{}, codeType CodeType, proto uint32) []byte {
+func Encode(v interface{}, codeType CodeType, proto uint32) *bytebufferpool.ByteBuffer {
 	if v == nil {
 		panic("v nil")
 	}
 	var (
-		raw []byte
-		err error
+		body []byte
+		err  error
 	)
 	if tmp, ok := v.([]byte); ok {
-		raw = tmp
+		body = tmp
 	} else {
-		raw, err = GameCoder(codeType).Marshal(v)
+		body, err = GameCoder(codeType).Marshal(v)
 		if err != nil {
 			panic(err)
 		}
 	}
-	bodyOffset := int(payloadLen + protocolLen + codeTypeLen)
-	msgLen := bodyOffset + len(raw)
-	buffer := *BUFFERPOOL.Get(uint32(msgLen))
-	//data := make([]byte, msgLen)
-	packetEndian.PutUint32(buffer, uint32(len(raw)))
-	packetEndian.PutUint32(buffer[payloadLen:], proto)
-	packetEndian.PutUint16(buffer[payloadLen+protocolLen:], uint16(codeType))
-	copy(buffer[bodyOffset:msgLen], raw)
-	return buffer[:msgLen]
+	//bodyOffset := int(payloadLen + protocolLen + codeTypeLen)
+	//msgLen := bodyOffset + len(raw)
+	//buffer := *BUFFERPOOL.Get(uint32(msgLen))
+	buffer := bytebufferpool.Get()
+	headBuffer := make([]byte, payloadLen+protocolLen+codeTypeLen)
+	packetEndian.PutUint32(headBuffer, uint32(len(body)))
+	packetEndian.PutUint32(headBuffer[payloadLen:], proto)
+	packetEndian.PutUint16(headBuffer[payloadLen+protocolLen:], uint16(codeType))
+	_, _ = buffer.Write(headBuffer)
+	_, _ = buffer.Write(body)
+	return buffer
 }
 
 func ReadFull(r io.Reader) ([]byte, uint32, uint16, error) {

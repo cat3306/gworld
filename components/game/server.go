@@ -7,6 +7,7 @@ import (
 	"github.com/cat3306/goworld/protocol"
 	"github.com/cat3306/goworld/util"
 	"github.com/panjf2000/gnet/v2"
+	"github.com/valyala/bytebufferpool"
 	"time"
 )
 
@@ -38,7 +39,9 @@ func (g *GameServer) OnOpen(c gnet.Conn) (out []byte, action gnet.Action) {
 	c.SetId(cId)
 	g.ConnMgr.Add(c)
 	glog.Logger.Sugar().Infof("gate clinet conn cid:%s connect", c.ID())
-	out = protocol.Encode(g.Config.Logic, protocol.String, util.MethodHash("SetLogic"))
+	buffer := protocol.Encode(g.Config.Logic, protocol.String, util.MethodHash("SetLogic"))
+	out = buffer.Bytes()
+	defer bytebufferpool.Put(buffer)
 	return out, gnet.None
 }
 func (g *GameServer) OnTraffic(c gnet.Conn) gnet.Action {

@@ -52,6 +52,7 @@ func (p *PlayerMgr) CreatePlayer(ctx *protocol.Context) {
 		glog.Logger.Sugar().Errorf("ctx.Bind err:%s", err.Error())
 		return
 	}
+	glog.Logger.Info("haha")
 	playerId := util.GenId(8)
 	player := &gameobject.Player{
 	}

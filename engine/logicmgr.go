@@ -2,6 +2,7 @@ package engine
 
 import (
 	"github.com/panjf2000/gnet/v2"
+	"github.com/valyala/bytebufferpool"
 	"sync"
 )
 
@@ -45,10 +46,13 @@ func (l *LogicConnMgr) GetByLogic(logic uint32) (*ConnManager, bool) {
 	return mgr, ok
 }
 
-func (l *LogicConnMgr) Broadcast(raw []byte) {
+func (l *LogicConnMgr) Broadcast(buffer *bytebufferpool.ByteBuffer) {
 	l.lock.RLock()
-	defer l.lock.RUnlock()
+	defer func() {
+		l.lock.RUnlock()
+		bytebufferpool.Put(buffer)
+	}()
 	for _, v := range l.logicConnMgr {
-		v.Broadcast(raw)
+		v.Broadcast(buffer.Bytes())
 	}
 }

@@ -5,6 +5,7 @@ go 1.18
 require (
 	github.com/cat3306/gocommon v0.0.0-20230808053550-2a4754d8e7cc
 	github.com/panjf2000/gnet/v2 v2.3.1
+	github.com/valyala/bytebufferpool v1.0.0
 	go.uber.org/zap v1.24.0
 	google.golang.org/protobuf v1.28.1
 )

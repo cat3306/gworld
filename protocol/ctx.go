@@ -3,13 +3,14 @@ package protocol
 import (
 	"github.com/cat3306/goworld/glog"
 	"github.com/cat3306/goworld/util"
+	"github.com/valyala/bytebufferpool"
 	"sync"
 
 	"github.com/panjf2000/gnet/v2"
 )
 
 type Context struct {
-	Payload  []byte
+	Payload  *bytebufferpool.ByteBuffer
 	CodeType CodeType
 	Proto    uint32
 	Conn     gnet.Conn
@@ -26,8 +27,8 @@ func (c *Context) DelProperty(k string) {
 	c.property.Delete(k)
 }
 func (c *Context) Bind(v interface{}) error {
-
-	return GameCoder(c.CodeType).Unmarshal(c.Payload, v)
+	defer bytebufferpool.Put(c.Payload)
+	return GameCoder(c.CodeType).Unmarshal(c.Payload.Bytes(), v)
 }
 
 func (c *Context) Send(v interface{}) {
@@ -49,9 +50,9 @@ func (c *Context) SendWithParams(v interface{}, codeType CodeType, hash uint32) 
 	}
 }
 
-func (c *Context) AsyncWrite(raw []byte) error {
-	return c.Conn.AsyncWrite(raw, func(c gnet.Conn) error {
-		BUFFERPOOL.Put(raw)
+func (c *Context) AsyncWrite(buffer *bytebufferpool.ByteBuffer) error {
+	return c.Conn.AsyncWrite(buffer.Bytes(), func(c gnet.Conn) error {
+		bytebufferpool.Put(buffer)
 		return nil
 	})
 }

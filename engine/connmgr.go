@@ -2,6 +2,7 @@ package engine
 
 import (
 	"github.com/cat3306/goworld/glog"
+	"github.com/valyala/bytebufferpool"
 	"sync"
 
 	"github.com/panjf2000/gnet/v2"
@@ -55,19 +56,23 @@ func (c *ConnManager) SendByOne(raw []byte, id string) {
 		glog.Logger.Sugar().Errorf("not found conn:%s", id)
 	}
 }
-func (c *ConnManager) SendBySomeone(raw []byte, ids []string) {
+func (c *ConnManager) SendBySomeone(buffer *bytebufferpool.ByteBuffer, ids []string, args string) {
 	c.locker.RLock()
-	defer c.locker.RUnlock()
+	defer func() {
+		c.locker.RUnlock()
+		bytebufferpool.Put(buffer)
+	}()
 	for _, id := range ids {
 		if conn, ok := c.connections[id]; ok {
-			err := conn.AsyncWrite(raw, nil)
+			err := conn.AsyncWrite(buffer.Bytes(), nil)
 			if err != nil {
 				glog.Logger.Sugar().Errorf("AsyncWrite err:%s", err.Error())
 			}
 		} else {
-			glog.Logger.Sugar().Errorf("not found conn:%s", id)
+			glog.Logger.Sugar().Errorf("%s not found conn:%s", args, id)
 		}
 	}
+
 }
 func (c *ConnManager) BroadcastExceptSelf(raw []byte, cid string) {
 	c.locker.RLock()
@@ -88,11 +93,14 @@ func (c *ConnManager) Len() int {
 	return len(c.connections)
 }
 
-func (c *ConnManager) SendSomeOne(raw []byte) {
+func (c *ConnManager) SendSomeOne(buffer *bytebufferpool.ByteBuffer) {
 	c.locker.RLock()
-	defer c.locker.RUnlock()
+	defer func() {
+		c.locker.RUnlock()
+		bytebufferpool.Put(buffer)
+	}()
 	for _, conn := range c.connections {
-		err := conn.AsyncWrite(raw, nil)
+		err := conn.AsyncWrite(buffer.Bytes(), nil)
 		if err != nil {
 			glog.Logger.Sugar().Errorf("AsyncWrite err:%s", err.Error())
 		}
