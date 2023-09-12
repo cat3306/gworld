@@ -3,8 +3,11 @@ module github.com/cat3306/goworld
 go 1.18
 
 require (
-	github.com/cat3306/gocommon v0.0.0-20230808053550-2a4754d8e7cc
+	github.com/alexeyco/simpletable v1.0.0
+	github.com/cat3306/gocommon v0.0.0-20230911064234-07def0964423
 	github.com/panjf2000/gnet/v2 v2.3.1
+	github.com/sevlyar/go-daemon v0.1.6
+	github.com/urfave/cli/v2 v2.25.7
 	github.com/valyala/bytebufferpool v1.0.0
 	go.uber.org/zap v1.24.0
 	google.golang.org/protobuf v1.28.1
@@ -13,9 +16,15 @@ require (
 require (
 	github.com/coreos/go-semver v0.3.1 // indirect
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
+	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
+	github.com/mattn/go-runewidth v0.0.12 // indirect
 	github.com/panjf2000/ants/v2 v2.4.8 // indirect
+	github.com/rivo/uniseg v0.1.0 // indirect
+	github.com/russross/blackfriday/v2 v2.1.0 // indirect
+	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
 	go.etcd.io/etcd/api/v3 v3.5.9 // indirect
 	go.etcd.io/etcd/client/pkg/v3 v3.5.9 // indirect
 	go.etcd.io/etcd/client/v3 v3.5.9 // indirect

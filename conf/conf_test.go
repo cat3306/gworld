@@ -8,7 +8,7 @@ import (
 
 func TestSaveConf(t *testing.T) {
 	c := confutil.Config{}
-	c.Save("./cluster.json", ClusterConf{
+	c.Save("./local.json", ClusterConf{
 		AuthConfig: AuthConfig{
 			IsAuth:         true,
 			PrivateKeyPath: "/Users/joker/code/go/src/github.com/cat3306/goworld/cert/private_key.pem",

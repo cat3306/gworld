@@ -1,0 +1,35 @@
+[
+  {
+    "name": "local",
+    "auth_config": {
+      "is_auth": true,
+      "private_key_path": "/Users/joker/code/go/src/github.com/cat3306/goworld/cert/private_key.pem"
+    },
+    "servers": {
+      "0": [
+        {
+          "logic": "gate",
+          "host": "0.0.0.0",
+          "tcp_port": 8888,
+          "max_conn": 1000,
+          "conn_write_buffer": 1048576,
+          "conn_read_buffer": 1048576,
+          "kv": {},
+          "outer_ip": ""
+        }
+      ],
+      "1": [
+        {
+          "logic": "base",
+          "host": "127.0.0.1",
+          "tcp_port": 8890,
+          "max_conn": 1000,
+          "conn_write_buffer": 1048576,
+          "conn_read_buffer": 1048576,
+          "kv": {},
+          "outer_ip": "127.0.0.1"
+        }
+      ]
+    }
+  }
+]

@@ -24,15 +24,19 @@ func (p *PlayerMgr) PlayerMove(ctx *protocol.Context) {
 		glog.Logger.Sugar().Errorf("ctx.Bind err:%s", err.Error())
 		return
 	}
-	req := &gameobject.PosInfo{}
+	req := &gameobject.PlayerPos{}
 	err = msg.ClientMsg.Bind(req)
 	if err != nil {
 		glog.Logger.Sugar().Errorf("ctx.Bind err:%s", err.Error())
 		return
 	}
-	glog.Logger.Sugar().Infof("%s", util.BytesToString(msg.ClientMsg.Payload))
+	//glog.Logger.Sugar().Infof("%s", util.BytesToString(msg.ClientMsg.Payload))
 	obj := p.Players.Get(req.NetObjId)
-	obj.OnMove(req.Vector3, gameobject.Vector3{})
+	if obj == nil {
+		glog.Logger.Sugar().Errorf("not found player id:%s", req.NetObjId)
+		return
+	}
+	obj.OnMove(req.Vector3, gameobject.Vector3{X: req.CX, Y: req.Yaw})
 	iMsg := &engine.InnerMsg{
 		ClientIds: msg.ClientIds,
 		ClientMsg: &engine.ClientMsg{
