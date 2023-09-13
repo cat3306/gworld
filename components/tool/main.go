@@ -7,6 +7,8 @@ import (
 	"github.com/alexeyco/simpletable"
 	"github.com/cat3306/gocommon/confutil"
 	"github.com/cat3306/goworld/conf"
+	"github.com/cat3306/goworld/engine"
+	"github.com/cat3306/goworld/protocol"
 	"github.com/cat3306/goworld/util"
 	"github.com/urfave/cli/v2"
 	"io/ioutil"
@@ -71,10 +73,44 @@ func commands() cli.Commands {
 			Name:        "restart",
 			Usage:       fmt.Sprintf("%s get", appName),
 			Description: "get game cluster",
-			Action:      GetCluster,
+			Action:      RestartCluster,
+		},
+		&cli.Command{
+			Name:        "status",
+			Usage:       fmt.Sprintf("%s get", appName),
+			Description: "get game cluster",
+			Action:      ClusterStatus,
 		},
 	}
 	return tmp
+}
+
+type HealthModel struct {
+	engine.BaseRouter
+}
+
+func (h *HealthModel) Init(v interface{}) engine.IRouter {
+	return h
+}
+func (h *HealthModel) Health(ctx *protocol.Context) {
+	str := ""
+	err := ctx.Bind(&str)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+}
+func ClusterStatus(ctx *cli.Context) error {
+	return nil
+}
+func RestartCluster(ctx *cli.Context) error {
+	err := StopCluster(ctx)
+	if err != nil {
+		return err
+	}
+	time.Sleep(time.Second)
+	return StartCluster(ctx)
 }
 func StopCluster(ctx *cli.Context) error {
 	target, _, err := getTargetClusterConf(ctx)
@@ -188,6 +224,7 @@ func initConfig(ctx *cli.Context) error {
 			Servers: map[util.ClusterType][]conf.ServerConf{
 				util.ClusterTypeGate: []conf.ServerConf{
 					{
+						Online:          true,
 						Idx:             0,
 						Host:            "0.0.0.0",
 						Port:            8888,
@@ -207,6 +244,7 @@ func initConfig(ctx *cli.Context) error {
 				},
 				util.ClusterTypeGame: []conf.ServerConf{
 					{
+						Online:          true,
 						Idx:             0,
 						Logic:           "base",
 						Host:            "127.0.0.1",
@@ -221,6 +259,38 @@ func initConfig(ctx *cli.Context) error {
 							BinPath:  "/Users/joker/code/go/bin/game",
 							PidFile:  "/Users/joker/Documents/game/pid/game0.pid",
 							LogFile:  "/Users/joker/Documents/game/log/game0.out",
+						},
+					},
+					{
+						Online:          true,
+						Idx:             1,
+						Logic:           "user",
+						Host:            "127.0.0.1",
+						Port:            8891,
+						MaxConn:         1000,
+						ConnWriteBuffer: 1048576,
+						ConnReadBuffer:  1048576,
+						KV: map[string]interface{}{
+							"mysql": &conf.MysqlConfig{
+								Host:         "127.0.0.1",
+								Port:         3306,
+								User:         "root",
+								Pwd:          "12345678",
+								ConnPoolSize: 20,
+								SetLog:       true,
+							},
+							"redis": &conf.RedisConfig{
+								Dbs:      []int{0, 1, 2},
+								Addr:     "127.0.0.1:6379",
+								Password: "redis-hahah@123",
+							},
+						},
+						OuterIp: "127.0.0.1",
+						Deploy: conf.DeployConf{
+							IsDaemon: true,
+							BinPath:  "/Users/joker/code/go/bin/user",
+							PidFile:  "/Users/joker/Documents/game/pid/user1.pid",
+							LogFile:  "/Users/joker/Documents/game/log/user1.out",
 						},
 					},
 				},

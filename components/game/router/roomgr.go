@@ -28,17 +28,17 @@ type CreateRoomRsp struct {
 
 // APi CreateRoom
 func (r *RoomMgr) CreateRoom(ctx *protocol.Context) {
-	msg := &engine.InnerMsg{}
-	err := ctx.Bind(msg)
-	if err != nil {
-		glog.Logger.Sugar().Errorf("ctx.Bind err:%s", err.Error())
-		return
-	}
-	coder := protocol.GameCoder(protocol.CodeType(msg.ClientMsg.CodeType))
+	//msg := &engine.InnerMsg{}
+	//err := ctx.Bind(msg)
+	//if err != nil {
+	//	glog.Logger.Sugar().Errorf("ctx.Bind err:%s", err.Error())
+	//	return
+	//}
+	//coder := protocol.GameCoder(protocol.CodeType(msg.ClientMsg.CodeType))
 	req := CreateRoomReq{}
-	err = coder.Unmarshal(msg.ClientMsg.Payload, &req)
+	msg,err:=engine.GameBind(req,ctx)
 	if err != nil {
-		glog.Logger.Sugar().Errorf("coder.Unmarshal err:%s", err.Error())
+		glog.Logger.Sugar().Errorf("GameBind err:%s", err.Error())
 		return
 	}
 	glog.Logger.Sugar().Infof("req:%+v", req)
@@ -59,10 +59,8 @@ func (r *RoomMgr) CreateRoom(ctx *protocol.Context) {
 	iMsg := &engine.InnerMsg{
 		ClientIds: msg.ClientIds,
 		ClientMsg: &engine.ClientMsg{
-			Logic:    0,
 			Payload:  []byte(room.Id),
 			Method:   msg.ClientMsg.Method,
-			CodeType: uint32(protocol.String),
 		},
 	}
 	ctx.SendWithParams(iMsg, protocol.ProtoBuffer, util.CallClient)

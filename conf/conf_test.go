@@ -37,6 +37,16 @@ func TestSaveConf(t *testing.T) {
 					KV:              map[string]interface{}{},
 					OuterIp:         "127.0.0.1",
 				},
+				{
+					Logic:           "user",
+					Host:            "127.0.0.1",
+					Port:            8890,
+					MaxConn:         1000,
+					ConnWriteBuffer: 1048576,
+					ConnReadBuffer:  1048576,
+					KV:              map[string]interface{}{},
+					OuterIp:         "127.0.0.1",
+				},
 			},
 		},
 	})

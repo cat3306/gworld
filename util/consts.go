@@ -37,3 +37,7 @@ const (
 	RoomId   = "RoomId"
 	ClientId = "ClientId"
 )
+
+const (
+	ContextInnerMsgKey = "InnerMsg"
+)

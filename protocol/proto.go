@@ -3,28 +3,27 @@ package protocol
 import (
 	"encoding/binary"
 	"errors"
-	"github.com/valyala/bytebufferpool"
-	"io"
-
 	"github.com/panjf2000/gnet/v2"
+	"github.com/valyala/bytebufferpool"
 )
 
 //
-// * 0                       4                       8           10
-// * +-----------------------+-----------------------+-----------+
-// * |   body len    		 |       protocol        | code type |
-// * +-----------------------+-----------------------+-----------+
-// * |                                   			 			 |
-// * +                                       		             +
-// * |                   body bytes              		       	 |
-// * +                                   						 +
-// * |                                  						 |
-// * +-----------------------------------------------------------+
+// * 0                       4                       8           10			 14
+// * +-----------------------+-----------------------+-----------+-----------+
+// * |   body len    		 |       protocol        | code type |  logic    |
+// * +-----------------------+-----------------------+-----------+-----------+
+// * |                                   			 						 |
+// * +                                       		            			 +
+// * |                   body bytes              		       	     		 |
+// * +                                   						             +
+// * |                                  						             |
+// * +-----------------------------------------------------------+-----------+
 
 const (
 	payloadLen  = uint32(4)
 	protocolLen = uint32(4)
 	codeTypeLen = uint32(2)
+	logicLen    = uint32(4)
 )
 
 var (
@@ -35,7 +34,7 @@ var (
 
 func Decode(c gnet.Conn) (*Context, error) {
 
-	bodyOffset := int(payloadLen + protocolLen + codeTypeLen)
+	bodyOffset := int(payloadLen + protocolLen + codeTypeLen + logicLen)
 	buf, err := c.Next(bodyOffset)
 	if err != nil {
 		return nil, err
@@ -44,6 +43,7 @@ func Decode(c gnet.Conn) (*Context, error) {
 	bodyLen := packetEndian.Uint32(buf[:payloadLen])
 	protocol := packetEndian.Uint32(buf[payloadLen : payloadLen+protocolLen])
 	codeType := packetEndian.Uint16(buf[payloadLen+protocolLen : payloadLen+protocolLen+codeTypeLen])
+	logic := packetEndian.Uint32(buf[payloadLen+protocolLen+codeTypeLen : bodyOffset])
 	msgLen := bodyOffset + int(bodyLen)
 	if msgLen > maxByte {
 		c.Close()
@@ -65,10 +65,11 @@ func Decode(c gnet.Conn) (*Context, error) {
 		CodeType: CodeType(codeType),
 		Proto:    protocol,
 		Conn:     c,
+		Logic:    logic,
 	}
 	return packet, nil
 }
-func Encode(v interface{}, codeType CodeType, proto uint32) *bytebufferpool.ByteBuffer {
+func Encode(v interface{}, codeType CodeType, proto uint32, logic uint32) *bytebufferpool.ByteBuffer {
 	if v == nil {
 		panic("v nil")
 	}
@@ -88,28 +89,12 @@ func Encode(v interface{}, codeType CodeType, proto uint32) *bytebufferpool.Byte
 	//msgLen := bodyOffset + len(raw)
 	//buffer := *BUFFERPOOL.Get(uint32(msgLen))
 	buffer := bytebufferpool.Get()
-	headBuffer := make([]byte, payloadLen+protocolLen+codeTypeLen)
+	headBuffer := make([]byte, payloadLen+protocolLen+codeTypeLen+logicLen)
 	packetEndian.PutUint32(headBuffer, uint32(len(body)))
 	packetEndian.PutUint32(headBuffer[payloadLen:], proto)
 	packetEndian.PutUint16(headBuffer[payloadLen+protocolLen:], uint16(codeType))
+	packetEndian.PutUint32(headBuffer[payloadLen+protocolLen+codeTypeLen:], logic)
 	_, _ = buffer.Write(headBuffer)
 	_, _ = buffer.Write(body)
 	return buffer
-}
-
-func ReadFull(r io.Reader) ([]byte, uint32, uint16, error) {
-	preBuff := make([]byte, 10)
-	_, err := io.ReadFull(r, preBuff)
-	if err != nil {
-		return nil, 0, 0, err
-	}
-	bodyLen := packetEndian.Uint32(preBuff[:payloadLen])
-	protocol := packetEndian.Uint32(preBuff[payloadLen : payloadLen+protocolLen])
-	codeType := packetEndian.Uint16(preBuff[payloadLen+protocolLen : payloadLen+protocolLen+codeTypeLen])
-	payload := make([]byte, bodyLen)
-	_, err = io.ReadFull(r, payload)
-	if err != nil {
-		return nil, 0, 0, err
-	}
-	return payload, protocol, codeType, nil
 }

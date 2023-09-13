@@ -87,12 +87,10 @@ func init() {
 
 func heartBeat(conn gnet.Conn, m string) {
 	msg := &engine.ClientMsg{
-		Logic:    util.MethodHash("base"),
-		Payload:  []byte("💓"),
-		Method:   util.MethodHash(m),
-		CodeType: uint32(protocol.String),
+		Payload: []byte("💓"),
+		Method:  util.MethodHash(m),
 	}
-	buffer := protocol.Encode(msg, protocol.ProtoBuffer, util.MethodHash("Dispatcher"))
+	buffer := protocol.Encode(msg, protocol.ProtoBuffer, util.MethodHash("Dispatcher"), util.MethodHash("base"))
 	defer bytebufferpool.Put(buffer)
 	for {
 		_, err := conn.Write(buffer.Bytes())
@@ -130,7 +128,7 @@ func auth(c gnet.Conn) {
 		return
 	}
 	req.CipherText = cryptoutil.RsaEncrypt([]byte(req.Text), pubKey)
-	buffer := protocol.Encode(req, protocol.Json, util.MethodHash("Auth"))
+	buffer := protocol.Encode(req, protocol.Json, util.MethodHash("Auth"), 0)
 	_, err = c.Write(buffer.Bytes())
 	defer bytebufferpool.Put(buffer)
 	fmt.Println(err)
@@ -157,13 +155,39 @@ func createRoom(conn gnet.Conn) {
 	}
 	reqR, _ := json.Marshal(req)
 	msg := &engine.ClientMsg{
-		Logic:    util.MethodHash("base"),
-		Payload:  reqR,
-		Method:   util.MethodHash("CreateRoom"),
-		CodeType: uint32(protocol.Json),
+		Payload: reqR,
+		Method:  util.MethodHash("CreateRoom"),
 	}
-	buffer := protocol.Encode(msg, protocol.ProtoBuffer, util.MethodHash("Dispatcher"))
+	buffer := protocol.Encode(msg, protocol.ProtoBuffer, util.MethodHash("Dispatcher"), util.MethodHash("base"))
 	defer buffer.Bytes()
 	fmt.Println(conn.Write(buffer.Bytes()))
 
+}
+
+func TestLogin(t *testing.T) {
+	_, conn1 := Conn()
+	auth(conn1)
+	time.Sleep(time.Second)
+	login(conn1)
+	select {}
+}
+
+type LoginReq struct {
+	Email string `json:"Email"`
+	Pwd   string `json:"Pwd"`
+}
+
+func login(conn gnet.Conn) {
+	req := LoginReq{
+		Pwd:   "123",
+		Email: "1273014435@qq.com",
+	}
+	reqR, _ := json.Marshal(req)
+	msg := &engine.ClientMsg{
+		Payload: reqR,
+		Method:  util.MethodHash("Login"),
+	}
+	buffer := protocol.Encode(msg, protocol.Json, util.MethodHash("Dispatcher"), util.MethodHash("user"))
+	defer buffer.Bytes()
+	fmt.Println(conn.Write(buffer.Bytes()))
 }

@@ -1,6 +1,7 @@
 package conf
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/cat3306/gocommon/confutil"
@@ -8,9 +9,23 @@ import (
 )
 
 var (
-	GlobalConf *ClusterConf
+	GlobalConf       *ClusterConf
+	GlobalServerConf *ServerConf
 )
 
+type MysqlConfig struct {
+	Host         string `json:"host"`
+	Port         int    `json:"port"`
+	User         string `json:"user"`
+	Pwd          string `json:"pwd"`
+	ConnPoolSize int    `json:"conn_pool_size"`
+	SetLog       bool   `json:"set_log"`
+}
+type RedisConfig struct {
+	Dbs      []int  `json:"dbs"`
+	Addr     string `json:"addr"`
+	Password string `json:"password"`
+}
 type AuthConfig struct {
 	IsAuth         bool   `json:"is_auth"` //是否客户端验签
 	PrivateKeyPath string `json:"private_key_path"`
@@ -33,7 +48,12 @@ type ClusterConf struct {
 
 func (s *ClusterConf) Select(t util.ClusterType, index int) *ServerConf {
 	if list, ok := s.Servers[t]; ok {
-		return &list[index]
+		for _, v := range list {
+			if v.Idx == index {
+				GlobalServerConf = &v
+				return &v
+			}
+		}
 	}
 	panic("not found cluster type")
 }
@@ -64,11 +84,15 @@ type ServerConf struct {
 	KV              map[string]interface{} `json:"kv"`
 	OuterIp         string                 `json:"outer_ip"`
 	Deploy          DeployConf             `json:"deploy"`
+	Online          bool                   `json:"online"`
 }
 
-func Load(file string) error {
-	config := confutil.Config{}
-	return config.Load(file, &GlobalConf)
+func MapToStruct(v interface{}, m map[string]interface{}) error {
+	raw, err := json.Marshal(m)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(raw, v)
 }
 func LoadConf(filePath string, name string) error {
 	config := confutil.Config{}

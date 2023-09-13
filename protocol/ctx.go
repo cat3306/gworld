@@ -14,6 +14,7 @@ type Context struct {
 	CodeType CodeType
 	Proto    uint32
 	Conn     gnet.Conn
+	Logic    uint32
 	property sync.Map
 }
 
@@ -32,19 +33,19 @@ func (c *Context) Bind(v interface{}) error {
 }
 
 func (c *Context) Send(v interface{}) {
-	err := c.AsyncWrite(Encode(v, c.CodeType, c.Proto))
+	err := c.AsyncWrite(Encode(v, c.CodeType, c.Proto, c.Logic))
 	if err != nil {
 		glog.Logger.Sugar().Errorf("AsyncWrite err:%s", err.Error())
 	}
 }
 func (c *Context) SendWithCodeType(v interface{}, codeType CodeType) {
-	err := c.AsyncWrite(Encode(v, codeType, c.Proto))
+	err := c.AsyncWrite(Encode(v, codeType, c.Proto, c.Logic))
 	if err != nil {
 		glog.Logger.Sugar().Errorf("AsyncWrite err:%s", err.Error())
 	}
 }
 func (c *Context) SendWithParams(v interface{}, codeType CodeType, hash uint32) {
-	err := c.AsyncWrite(Encode(v, codeType, hash))
+	err := c.AsyncWrite(Encode(v, codeType, hash, c.Logic))
 	if err != nil {
 		glog.Logger.Sugar().Errorf("AsyncWrite err:%s", err.Error())
 	}

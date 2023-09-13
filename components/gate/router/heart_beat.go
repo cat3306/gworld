@@ -22,3 +22,11 @@ func (h *HeartBeat) HeartBeat(ctx *protocol.Context) {
 	}
 	ctx.Send("*")
 }
+func (h *HeartBeat) Health(ctx *protocol.Context) {
+	msg := ""
+	err := ctx.Bind(&msg)
+	if err != nil {
+		glog.Logger.Sugar().Errorf("Bind err:%s", err)
+	}
+	ctx.Send("ok")
+}

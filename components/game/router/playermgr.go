@@ -18,16 +18,10 @@ func (p *PlayerMgr) Init(v interface{}) engine.IRouter {
 }
 
 func (p *PlayerMgr) PlayerMove(ctx *protocol.Context) {
-	msg := &engine.InnerMsg{}
-	err := ctx.Bind(msg)
-	if err != nil {
-		glog.Logger.Sugar().Errorf("ctx.Bind err:%s", err.Error())
-		return
-	}
 	req := &gameobject.PlayerPos{}
-	err = msg.ClientMsg.Bind(req)
+	msg, err := engine.GameBind(req, ctx)
 	if err != nil {
-		glog.Logger.Sugar().Errorf("ctx.Bind err:%s", err.Error())
+		glog.Logger.Sugar().Errorf("GameBind err:%s", err.Error())
 		return
 	}
 	//glog.Logger.Sugar().Infof("%s", util.BytesToString(msg.ClientMsg.Payload))
@@ -37,23 +31,22 @@ func (p *PlayerMgr) PlayerMove(ctx *protocol.Context) {
 		return
 	}
 	obj.OnMove(req.Vector3, gameobject.Vector3{X: req.CX, Y: req.Yaw})
-	iMsg := &engine.InnerMsg{
-		ClientIds: msg.ClientIds,
-		ClientMsg: &engine.ClientMsg{
-			Logic:    0,
-			Payload:  msg.ClientMsg.Payload,
-			Method:   msg.ClientMsg.Method,
-			CodeType: msg.ClientMsg.CodeType,
-		},
-	}
-	ctx.SendWithParams(iMsg, protocol.ProtoBuffer, util.CallClient)
+	engine.GameBroadcast(ctx, msg.ClientMsg.Payload, msg.ClientIds)
+	//iMsg := &engine.InnerMsg{
+	//	ClientIds:      msg.ClientIds,
+	//	ClientCodeType: uint32(ctx.CodeType),
+	//	ClientMsg: &engine.ClientMsg{
+	//		Payload: msg.ClientMsg.Payload,
+	//		Method:  msg.ClientMsg.Method,
+	//	},
+	//}
+	//ctx.SendWithParams(iMsg, protocol.ProtoBuffer, util.CallClient)
 }
 
 func (p *PlayerMgr) CreatePlayer(ctx *protocol.Context) {
-	msg := &engine.InnerMsg{}
-	err := ctx.Bind(msg)
+	msg, err := engine.GetCtxInnerMsg(ctx)
 	if err != nil {
-		glog.Logger.Sugar().Errorf("ctx.Bind err:%s", err.Error())
+		glog.Logger.Sugar().Errorf("GetCtxInnerMsg err:%s", err.Error())
 		return
 	}
 	glog.Logger.Info("haha")
@@ -62,14 +55,14 @@ func (p *PlayerMgr) CreatePlayer(ctx *protocol.Context) {
 	}
 	player.OnCreated(playerId)
 	p.Players.Add(player)
-	iMsg := &engine.InnerMsg{
-		ClientIds: msg.ClientIds,
-		ClientMsg: &engine.ClientMsg{
-			Logic:    0,
-			Payload:  []byte(playerId),
-			Method:   msg.ClientMsg.Method,
-			CodeType: uint32(protocol.String),
-		},
-	}
-	ctx.SendWithParams(iMsg, protocol.ProtoBuffer, util.CallClient)
+	//iMsg := &engine.InnerMsg{
+	//	ClientIds:      msg.ClientIds,
+	//	ClientCodeType: uint32(protocol.String),
+	//	ClientMsg: &engine.ClientMsg{
+	//		Payload: []byte(playerId),
+	//		Method:  msg.ClientMsg.Method,
+	//	},
+	//}
+	engine.GameBroadcast(ctx, playerId, msg.ClientIds)
+	//ctx.SendWithParams(iMsg, protocol.ProtoBuffer, util.CallClient)
 }
