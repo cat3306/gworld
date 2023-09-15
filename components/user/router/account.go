@@ -43,6 +43,7 @@ func (a *Account) HashPwd(pwd string) string {
 }
 func (a *Account) ComparePwd(reqPwd string, hashPwd string) bool {
 	s := a.HashPwd(reqPwd)
+	glog.Logger.Sugar().Infof("reqPwd:%s", s)
 	return s == hashPwd
 }
 
@@ -132,7 +133,7 @@ func (a *Account) Register(ctx *protocol.Context, tag struct{}) {
 		//ctx.Send(gnet.JsonRspErr(err.Error()))
 		return
 	}
-	stashCode, err := thirdmodule.CacheSelect(0).Get(context.Background(),GenSignUpCode + req.Email).Result()
+	stashCode, err := thirdmodule.CacheSelect(0).Get(context.Background(), GenSignUpCode+req.Email).Result()
 	if err != nil {
 		glog.Logger.Sugar().Errorf("thirdmodule.Cache.GetString failed,err:%s", err.Error())
 		//ctx.Send(gnet.JsonRspErr("获取验证码失败!"))
@@ -193,7 +194,7 @@ func (a *Account) EmailCode(ctx *protocol.Context, tag struct{}) {
 		return
 	}
 	code := GenEmailCode(6)
-	err := thirdmodule.CacheSelect(0).Set(context.Background(),GenSignUpCode+req.Email, code, CodeTimeOut).Err()
+	err := thirdmodule.CacheSelect(0).Set(context.Background(), GenSignUpCode+req.Email, code, CodeTimeOut).Err()
 	if err != nil {
 		glog.Logger.Sugar().Errorf("configure.Cache.Set failed err:%s", err.Error())
 		//ctx.Send(gnet.JsonRspErr(err.Error()))

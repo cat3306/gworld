@@ -224,6 +224,7 @@ func initConfig(ctx *cli.Context) error {
 			Servers: map[util.ClusterType][]conf.ServerConf{
 				util.ClusterTypeGate: []conf.ServerConf{
 					{
+						Name:            "本地网关",
 						Online:          true,
 						Idx:             0,
 						Host:            "0.0.0.0",
@@ -233,7 +234,7 @@ func initConfig(ctx *cli.Context) error {
 						ConnReadBuffer:  1048576,
 						KV:              map[string]interface{}{},
 						Logic:           "gate",
-						OuterIp:         "",
+						OuterIp:         "127.0.0.1",
 						Deploy: conf.DeployConf{
 							IsDaemon: true,
 							BinPath:  "/Users/joker/code/go/bin/gate",

@@ -74,6 +74,7 @@ func (s *ClusterConf) ClusterIdxs(t util.ClusterType) (idx []int) {
 }
 
 type ServerConf struct {
+	Name            string                 `json:"name"`
 	Idx             int                    `json:"idx"`
 	Logic           string                 `json:"logic"`
 	Host            string                 `json:"host"`     //ip

@@ -56,6 +56,21 @@ func (h *MsgModel) CreateRoom(ctx *protocol.Context) {
 		glog.Logger.Sugar().Errorf("Bind err:%s", err)
 	}
 }
+
+type JsonResponse struct {
+	Code int         `json:"Code"`
+	Msg  string      `json:"Msg"`
+	Data interface{} `json:"Data,omitempty"`
+}
+
+func (h *MsgModel) Login(ctx *protocol.Context) {
+	req := JsonResponse{}
+	err := ctx.Bind(&req)
+	glog.Logger.Sugar().Infof("Login:%+v,id:%s", req, ctx.Conn.ID())
+	if err != nil {
+		glog.Logger.Sugar().Errorf("Bind err:%s", err)
+	}
+}
 func Conn() (gnet.Conn, gnet.Conn) {
 	ev := engine.NewClientEvents(util.ClusterTypeGate)
 	ev.AddRouter(new(MsgModel))
