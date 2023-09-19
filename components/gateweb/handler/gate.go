@@ -43,6 +43,9 @@ func gateInfo(req *GateInfoReq) (interface{}, error) {
 	for k, servers := range conf.GlobalConf.Servers {
 		if k == util.ClusterTypeGate {
 			for _, vv := range servers {
+				if !vv.Online {
+					continue
+				}
 				rsp = append(rsp, gateInfoData{
 					Port: vv.Port,
 					Ip:   vv.OuterIp,

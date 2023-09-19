@@ -32,6 +32,7 @@ func (g *GateServer) OnClose(c gnet.Conn, err error) (action gnet.Action) {
 		Conn:  c,
 	}
 	ctx.SetProperty("Proto", util.MethodHash("OnDisconnect"))
+	ctx.SetProperty("cid", c.ID())
 	g.ClientCtxChan <- ctx
 	return gnet.None
 }
@@ -48,6 +49,7 @@ func (g *GateServer) OnOpen(c gnet.Conn) (out []byte, action gnet.Action) {
 		Proto: g.innerGameServerBroadcast,
 		Conn:  c,
 	}
+	ctx.SetProperty("cid", c.ID())
 	ctx.SetProperty("Proto", util.MethodHash("OnConnect"))
 	g.ClientCtxChan <- ctx
 	return out, gnet.None
@@ -61,7 +63,6 @@ func (g *GateServer) OnTraffic(c gnet.Conn) gnet.Action {
 	if context == nil {
 		panic("context nil")
 	}
-	context.SetProperty(util.GameClientProxyMgrKey, g.gameClientProxy.ConnMgr)
 	g.ClientCtxChan <- context
 
 	return gnet.None
@@ -77,6 +78,9 @@ func (g *GateServer) GameInitialize() error {
 	g.gameClientProxy.SetGClient(cli)
 	list := conf.GlobalConf.ClusterList(util.ClusterTypeGame)
 	for _, v := range list {
+		if !v.Online {
+			continue
+		}
 		g.gameClientProxy.tryConnectChan <- &engine.TryConnectMsg{
 			NetWork: "tcp",
 			Addr:    fmt.Sprintf("%s:%d", v.OuterIp, v.Port),

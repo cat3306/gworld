@@ -18,7 +18,6 @@ const (
 )
 const (
 	GateClientMgrKey      = "GateClientMgrKey"
-	GameClientProxyMgrKey = "GameClientProxyMgrKey"
 )
 
 func (c ClusterType) String() string {

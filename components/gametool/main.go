@@ -33,7 +33,7 @@ func main() {
 
 	app := cli.App{
 		Name:        "gametool",
-		Usage:       "game cluster manage tool",
+		Usage:       "game cluster manage gametool",
 		Description: "",
 		Commands:    commands(),
 	}
@@ -114,15 +114,19 @@ func RestartCluster(ctx *cli.Context) error {
 }
 func StopCluster(ctx *cli.Context) error {
 	target, _, err := getTargetClusterConf(ctx)
+	if err != nil {
+		return err
+	}
 	name := ctx.Args().First()
-	if err != nil || target == nil {
-		if target == nil {
-			err = errors.New(fmt.Sprintf("not found %s config", name))
-		}
+	if target == nil {
+		err = errors.New(fmt.Sprintf("not found %s config", name))
 		return err
 	}
 	for _, servers := range target.Servers {
 		for _, server := range servers {
+			if !server.Online {
+				continue
+			}
 			raw, err := ioutil.ReadFile(server.Deploy.PidFile)
 			if err != nil {
 				return err
@@ -168,6 +172,9 @@ func StartCluster(ctx *cli.Context) error {
 	}
 	for _, servers := range target.Servers {
 		for _, server := range servers {
+			if !server.Online {
+				continue
+			}
 			args := []string{"-c", configPath, "-name", name, "-idx", strconv.Itoa(server.Idx)}
 
 			str, err := Cmd(server.Deploy.BinPath, args, true, time.Hour)

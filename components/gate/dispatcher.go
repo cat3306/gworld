@@ -64,12 +64,19 @@ func (g *GateDispatcher) InnerOnBroadcast(ctx *protocol.Context) {
 		return
 	}
 	pro := v.(uint32)
+
+	cidV, ok := ctx.GetProperty("cid")
+	if !ok {
+		glog.Logger.Sugar().Errorf("not found cid")
+		return
+	}
+	cid := cidV.(string)
 	var payload []byte
 	if ctx.Payload != nil {
 		payload = ctx.Payload.Bytes()
 	}
 	buffer := protocol.Encode(&engine.InnerMsg{
-		ClientIds: []string{ctx.Conn.ID()},
+		ClientIds: []string{cid},
 		ClientMsg: &engine.ClientMsg{
 			Payload: payload,
 		},
