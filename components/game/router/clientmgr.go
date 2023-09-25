@@ -12,17 +12,22 @@ var (
 
 //client
 type GameClient struct {
-	ConnId string
-	RoomId string
+	ClientId     string
+	ServerConnId string
+	RoomId       string
+	UserId       string
 }
 
 type ClientMgr struct {
-	clients map[string]*GameClient
+	clients     map[string]*GameClient
+	gateConnMgr *engine.ConnManager
 }
 
 func (c *ClientMgr) Init(v interface{}) engine.IRouter {
 	c.clients = make(map[string]*GameClient)
 	clientMgr = c
+	mgr := v.(*engine.ConnManager)
+	c.gateConnMgr = mgr
 	return c
 }
 func (c *ClientMgr) OnConnect(ctx *protocol.Context) {
@@ -38,7 +43,8 @@ func (c *ClientMgr) OnConnect(ctx *protocol.Context) {
 		glog.Logger.Sugar().Warnf("%s:already add ,delete !", cId)
 	}
 	c.clients[cId] = &GameClient{
-		ConnId: msg.ClientIds[0],
+		ClientId:     msg.ClientIds[0],
+		ServerConnId: ctx.Conn.ID(),
 	}
 
 }

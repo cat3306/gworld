@@ -49,7 +49,7 @@ func main() {
 	server.AddRouter(
 		new(router.HeartBeat),
 		new(router.RoomMgr).Init(nil),
-		new(router.ClientMgr).Init(nil),
+		new(router.ClientMgr).Init(server.ConnMgr),
 		new(router.PlayerMgr).Init(nil),
 	)
 

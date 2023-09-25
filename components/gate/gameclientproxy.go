@@ -161,6 +161,7 @@ func (g *GameClientProxyRouter) SetLogic(ctx *protocol.Context) {
 	glog.Logger.Sugar().Infof("set logic from game,logic:%s", logic)
 }
 
+//出口
 func (g *GameClientProxyRouter) CallClient(ctx *protocol.Context) {
 	msg := &engine.InnerMsg{}
 	err := ctx.Bind(msg)

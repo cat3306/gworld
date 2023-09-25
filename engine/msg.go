@@ -20,7 +20,7 @@ func GameBind(v interface{}, ctx *protocol.Context) (*InnerMsg, error) {
 }
 
 func GetCtxInnerMsg(ctx *protocol.Context) (*InnerMsg, error) {
-	v, ok := ctx.GetProperty(util.ContextInnerMsgKey)
+	v, ok := ctx.GetProperty(util.InnerMsgKey)
 	if !ok {
 		return nil, errors.New("not found ContextInnerMsgKey")
 	}

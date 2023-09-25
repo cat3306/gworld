@@ -70,7 +70,8 @@ func (g *GameServer) OnTraffic(c gnet.Conn) gnet.Action {
 		glog.Logger.Sugar().Errorf("client id none drop")
 		return gnet.None
 	}
-	context.SetProperty(util.ContextInnerMsgKey, innerMsg)
+	context.SetProperty(util.InnerMsgKey, innerMsg)
+	context.SetProperty(util.ServerMgr, g.ConnMgr)
 	g.ClientCtxChan <- context
 	return gnet.None
 }

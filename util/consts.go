@@ -17,7 +17,7 @@ const (
 	ChanPacketSize = 10000
 )
 const (
-	GateClientMgrKey      = "GateClientMgrKey"
+	GateClientMgrKey = "GateClientMgrKey"
 )
 
 func (c ClusterType) String() string {
@@ -38,5 +38,6 @@ const (
 )
 
 const (
-	ContextInnerMsgKey = "InnerMsg"
+	InnerMsgKey = "InnerMsg"
+	ServerMgr   = "ServerMgr"
 )
