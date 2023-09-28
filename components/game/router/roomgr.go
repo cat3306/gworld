@@ -36,7 +36,7 @@ func (r *RoomMgr) CreateRoom(ctx *protocol.Context) {
 	//}
 	//coder := protocol.GameCoder(protocol.CodeType(msg.ClientMsg.CodeType))
 	req := CreateRoomReq{}
-	msg,err:=engine.GameBind(req,ctx)
+	msg, err := engine.GameBind(req, ctx)
 	if err != nil {
 		glog.Logger.Sugar().Errorf("GameBind err:%s", err.Error())
 		return
@@ -51,7 +51,7 @@ func (r *RoomMgr) CreateRoom(ctx *protocol.Context) {
 		joinState: req.JoinState,
 		gameState: false,
 		scene:     0,
-		Id:        util.GenId(7),
+		Id:        util.GenGameObjectId(),
 		clients:   map[string]*ClientInfo{},
 	}
 	room.clients[msg.ClientIds[0]] = &ClientInfo{}
@@ -59,8 +59,8 @@ func (r *RoomMgr) CreateRoom(ctx *protocol.Context) {
 	iMsg := &engine.InnerMsg{
 		ClientIds: msg.ClientIds,
 		ClientMsg: &engine.ClientMsg{
-			Payload:  []byte(room.Id),
-			Method:   msg.ClientMsg.Method,
+			Payload: []byte(room.Id),
+			Method:  msg.ClientMsg.Method,
 		},
 	}
 	ctx.SendWithParams(iMsg, protocol.ProtoBuffer, util.CallClient)

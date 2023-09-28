@@ -34,7 +34,7 @@ func (ev *ClientEvents) OnBoot(e gnet.Engine) (action gnet.Action) {
 	return
 }
 func (ev *ClientEvents) OnOpen(c gnet.Conn) ([]byte, gnet.Action) {
-	c.SetId(util.GenId(9))
+	c.SetId(util.GenConnId())
 	ev.ConnMgr.Add(c)
 	glog.Logger.Sugar().Infof("client conn:%s,clusterType:%s", c.ID(), ev.clusterType)
 

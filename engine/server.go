@@ -3,6 +3,7 @@ package engine
 import (
 	"github.com/cat3306/goworld/conf"
 	"github.com/cat3306/goworld/util"
+	"math"
 
 	"github.com/cat3306/goworld/protocol"
 
@@ -88,10 +89,17 @@ func (s *Server) AddHandlerUint32(hash uint32, f func(c *protocol.Context)) {
 }
 
 func (s *Server) MainRoutine() {
-	for {
-		select {
-		case ctx := <-s.ClientCtxChan:
-			s.HandlerMgr.ExeHandler(ctx)
+	f := func() {
+		for {
+			select {
+			case ctx := <-s.ClientCtxChan:
+				s.HandlerMgr.ExeHandler(ctx)
+			}
 		}
 	}
+	util.PanicRepeatRun(f, util.PanicRepeatRunArgs{
+		Sleep: 0,
+		Try:   math.MaxInt64,
+	})
+
 }

@@ -4,6 +4,9 @@ import (
 	"github.com/cat3306/goworld/engine"
 	"github.com/cat3306/goworld/glog"
 	"github.com/cat3306/goworld/protocol"
+	"github.com/cat3306/goworld/util"
+	"github.com/panjf2000/gnet/v2"
+	"github.com/valyala/bytebufferpool"
 )
 
 var (
@@ -21,6 +24,7 @@ type GameClient struct {
 type ClientMgr struct {
 	clients     map[string]*GameClient
 	gateConnMgr *engine.ConnManager
+	gateClients map[string][]*GameClient
 }
 
 func (c *ClientMgr) Init(v interface{}) engine.IRouter {
@@ -60,4 +64,55 @@ func (c *ClientMgr) OnDisconnect(ctx *protocol.Context) {
 func (c *ClientMgr) GetInfo(id string) (*GameClient, bool) {
 	v, o := c.clients[id]
 	return v, o
+}
+
+func (c *ClientMgr) Broadcast(ctx *protocol.Context, clientIds []string, object interface{}) {
+
+	gateIds := map[string][]string{}
+	if len(clientIds) == 0 {
+		for _, info := range c.clients {
+			if tmp, ok := gateIds[info.ServerConnId]; ok {
+				gateIds[info.ServerConnId] = append(tmp, info.ClientId)
+			} else {
+				gateIds[info.ServerConnId] = []string{info.ClientId}
+			}
+		}
+	} else {
+		for cId, v := range c.clients {
+			if tmp, ok := gateIds[v.ServerConnId]; ok {
+				gateIds[v.ServerConnId] = append(tmp, cId)
+			} else {
+				gateIds[v.ServerConnId] = []string{cId}
+			}
+		}
+	}
+	msg, _ := engine.GetCtxInnerMsg(ctx)
+	switch object.(type) {
+	case string:
+		msg.ClientMsg.Payload = util.StringToBytes(object.(string))
+		msg.ClientCodeType = uint32(protocol.String)
+	case []byte:
+		msg.ClientMsg.Payload = object.([]byte)
+	default:
+		raw, err := protocol.GameCoder(protocol.CodeType(msg.ClientCodeType)).Marshal(object)
+		if err != nil {
+			panic(err)
+		}
+		msg.ClientMsg.Payload = raw
+	}
+	glog.Logger.Sugar().Infof("%+v", gateIds)
+	for v, cIds := range gateIds {
+		msg.ClientIds = cIds
+		buffer := protocol.Encode(msg, protocol.ProtoBuffer, util.CallClient, ctx.Logic)
+		_, conn := c.gateConnMgr.Get(v)
+		err := conn.AsyncWrite(buffer.Bytes(), func(c gnet.Conn) error {
+			bytebufferpool.Put(buffer)
+			return nil
+		})
+		if err != nil {
+			glog.Logger.Sugar().Errorf("Broadcast err:%s", err.Error())
+		}
+
+	}
+
 }

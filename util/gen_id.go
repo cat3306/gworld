@@ -1,6 +1,10 @@
 package util
 
-import "math/rand"
+import (
+	"github.com/lithammer/shortuuid/v4"
+	"github.com/rs/xid"
+	"math/rand"
+)
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 const (
@@ -10,6 +14,7 @@ const (
 )
 
 func GenId(n int) string {
+
 	b := make([]byte, n)
 	// A rand.Int63() generates 63 random bits, enough for letterIdxMax letters!
 	//rand.Seed(time.Now().UnixNano())
@@ -26,6 +31,9 @@ func GenId(n int) string {
 	}
 	return BytesToString(b)
 }
+func GenGameObjectId() string {
+	return xid.New().String()
+}
 func GenConnId() string {
-	return GenId(9)
+	return shortuuid.New()
 }

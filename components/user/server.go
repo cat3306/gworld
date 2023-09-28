@@ -40,8 +40,10 @@ func (g *GameServer) OnOpen(c gnet.Conn) (out []byte, action gnet.Action) {
 	g.ConnMgr.Add(c)
 	glog.Logger.Sugar().Infof("gate clinet conn cid:%s connect", c.ID())
 	buffer := protocol.Encode(g.Config.Logic, protocol.String, util.MethodHash("SetLogic"), 0)
-	out = buffer.Bytes()
-	defer bytebufferpool.Put(buffer)
+	copyOut := make([]byte, buffer.Len())
+	copy(copyOut, buffer.Bytes())
+	out = copyOut
+	bytebufferpool.Put(buffer)
 	return out, gnet.None
 }
 func (g *GameServer) OnTraffic(c gnet.Conn) gnet.Action {

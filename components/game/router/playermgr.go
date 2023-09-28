@@ -31,16 +31,8 @@ func (p *PlayerMgr) PlayerMove(ctx *protocol.Context) {
 		return
 	}
 	obj.OnMove(req.Vector3, gameobject.Vector3{X: req.CX, Y: req.Yaw})
-	engine.GameBroadcast(ctx, msg.ClientMsg.Payload, msg.ClientIds)
-	//iMsg := &engine.InnerMsg{
-	//	ClientIds:      msg.ClientIds,
-	//	ClientCodeType: uint32(ctx.CodeType),
-	//	ClientMsg: &engine.ClientMsg{
-	//		Payload: msg.ClientMsg.Payload,
-	//		Method:  msg.ClientMsg.Method,
-	//	},
-	//}
-	//ctx.SendWithParams(iMsg, protocol.ProtoBuffer, util.CallClient)
+	//engine.GameBroadcast(ctx, msg.ClientMsg.Payload, msg.ClientIds)
+	clientMgr.Broadcast(ctx, nil, msg.ClientMsg.Payload)
 }
 
 func (p *PlayerMgr) CreatePlayer(ctx *protocol.Context) {
@@ -50,19 +42,9 @@ func (p *PlayerMgr) CreatePlayer(ctx *protocol.Context) {
 		return
 	}
 	glog.Logger.Info("haha")
-	playerId := util.GenId(8)
-	player := &gameobject.Player{
-	}
+	playerId := util.GenGameObjectId()
+	player := &gameobject.Player{}
 	player.OnCreated(playerId)
 	p.Players.Add(player)
-	//iMsg := &engine.InnerMsg{
-	//	ClientIds:      msg.ClientIds,
-	//	ClientCodeType: uint32(protocol.String),
-	//	ClientMsg: &engine.ClientMsg{
-	//		Payload: []byte(playerId),
-	//		Method:  msg.ClientMsg.Method,
-	//	},
-	//}
-	engine.GameBroadcast(ctx, playerId, msg.ClientIds)
-	//ctx.SendWithParams(iMsg, protocol.ProtoBuffer, util.CallClient)
+	clientMgr.Broadcast(ctx, msg.ClientIds, playerId)
 }

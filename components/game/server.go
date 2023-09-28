@@ -40,18 +40,14 @@ func (g *GameServer) OnOpen(c gnet.Conn) (out []byte, action gnet.Action) {
 	g.ConnMgr.Add(c)
 	glog.Logger.Sugar().Infof("gate clinet conn cid:%s connect", c.ID())
 	buffer := protocol.Encode(g.Config.Logic, protocol.String, util.MethodHash("SetLogic"), 0)
-	out = buffer.Bytes()
-	defer bytebufferpool.Put(buffer)
+
+	copyOut := make([]byte, buffer.Len())
+	copy(copyOut, buffer.Bytes())
+	out = copyOut
+	bytebufferpool.Put(buffer)
 	return out, gnet.None
 }
 func (g *GameServer) OnTraffic(c gnet.Conn) gnet.Action {
-	//defer func() {
-	//	err := recover()
-	//	if err != nil {
-	//		glog.Logger.Sugar().Errorf("OnTraffic panic %v", err)
-	//	}
-	//}()
-	//s.eng.CountConnections()
 	context, err := protocol.Decode(c)
 	if err != nil {
 		glog.Logger.Sugar().Warnf("OnTraffic err:%s", err.Error())
@@ -71,7 +67,6 @@ func (g *GameServer) OnTraffic(c gnet.Conn) gnet.Action {
 		return gnet.None
 	}
 	context.SetProperty(util.InnerMsgKey, innerMsg)
-	context.SetProperty(util.ServerMgr, g.ConnMgr)
 	g.ClientCtxChan <- context
 	return gnet.None
 }
