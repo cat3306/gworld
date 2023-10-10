@@ -18,23 +18,27 @@ type IObject interface {
 	//DescribeEntityType() // Define entity attributes in this function
 	OnMove(pos Vector3, rot Vector3)
 	GetId() string
+	OnSaveData() []byte
 }
 
 type GameObject struct {
-	Id           string
-	Tag          string
+	Id           string `json:"id"`
+	Tag          string `json:"tag"`
 	destroyed    bool
-	Position     Vector3
-	Rotation     Vector3
-	InterestedIn GameObjectSet
-	InterestedBy GameObjectSet
-	Components   GameObjectSet
+	Position     Vector3       `json:"position"`
+	Rotation     Vector3       `json:"rotation"`
+	InterestedIn GameObjectSet `json:"-"`
+	InterestedBy GameObjectSet `json:"-"`
+	Components   GameObjectSet `json:"-"`
 	client       *GameClient
 	Property     map[string]interface{}
 }
 
 func (g *GameObject) OnMigrateOut() {
 
+}
+func (g *GameObject) OnSaveData() []byte {
+	return nil
 }
 func (g *GameObject) OnMigrateIn() {
 

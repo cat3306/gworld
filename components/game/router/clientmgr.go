@@ -66,6 +66,21 @@ func (c *ClientMgr) GetInfo(id string) (*GameClient, bool) {
 	return v, o
 }
 
+func (c *ClientMgr) OnSetGateIdx(ctx *protocol.Context) {
+	msg, err := engine.GetCtxInnerMsg(ctx)
+	if err != nil {
+		glog.Logger.Sugar().Errorf("err:%s", err.Error())
+		return
+	}
+	idx := msg.Properties["gateIdx"]
+	if idx == "" {
+		glog.Logger.Sugar().Errorf("invalid gate idx")
+		return
+	}
+	ctx.Conn.SetId(idx)
+	c.gateConnMgr.Add(ctx.Conn)
+
+}
 func (c *ClientMgr) Broadcast(ctx *protocol.Context, clientIds []string, object interface{}) {
 
 	gateIds := map[string][]string{}

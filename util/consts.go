@@ -40,4 +40,6 @@ const (
 const (
 	InnerMsgKey = "InnerMsg"
 	ServerMgr   = "ServerMgr"
+
+	LogicNone = uint32(0)
 )

@@ -46,7 +46,7 @@ func Decode(c gnet.Conn) (*Context, error) {
 	logic := packetEndian.Uint32(buf[payloadLen+protocolLen+codeTypeLen : bodyOffset])
 	msgLen := bodyOffset + int(bodyLen)
 	if msgLen > maxByte {
-		c.Close()
+		//c.Close()
 		return nil, ErrTooLargePacket
 	}
 	if c.InboundBuffered() < int(bodyLen) {
@@ -60,14 +60,14 @@ func Decode(c gnet.Conn) (*Context, error) {
 	_, _ = buffer.Write(buf)
 	//payload := make([]byte, len(buf))
 	//copy(payload, buf)
-	packet := &Context{
+	ctx := &Context{
 		Payload:  buffer,
 		CodeType: CodeType(codeType),
 		Proto:    protocol,
 		Conn:     c,
 		Logic:    logic,
 	}
-	return packet, nil
+	return ctx, nil
 }
 func Encode(v interface{}, codeType CodeType, proto uint32, logic uint32) *bytebufferpool.ByteBuffer {
 	if v == nil {

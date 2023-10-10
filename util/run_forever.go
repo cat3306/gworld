@@ -4,6 +4,7 @@ import (
 	"github.com/cat3306/goworld/glog"
 	"reflect"
 	"runtime"
+	"runtime/debug"
 	"time"
 )
 
@@ -18,7 +19,8 @@ func runPanicLess(f func()) (panicLess bool) {
 		panicLess = err == nil
 		if err != nil {
 			name := runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
-			glog.Logger.Sugar().Errorf("%s err:%v", name, err)
+			s := debug.Stack()
+			glog.Logger.Sugar().Errorf("%s err:%v,%s", name, err, s)
 		}
 	}()
 	f()

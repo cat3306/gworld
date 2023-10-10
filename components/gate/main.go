@@ -42,11 +42,9 @@ func main() {
 			}
 		}()
 	}
-	server := GateServer{
-		Server: engine.NewEngine(config, util.ClusterTypeGate),
-	}
+	server := NewGateServer(config, util.ClusterTypeGate)
 	server.AddRouter(
-		new(GateDispatcher).Init(&server),
+		new(GateDispatcher).Init(server),
 		new(router.Auth).Init(nil),
 	)
 	//server.AddHandler("dispatcher", server.Dispatcher)

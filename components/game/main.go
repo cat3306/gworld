@@ -8,6 +8,9 @@ import (
 	"github.com/cat3306/goworld/engine"
 	"github.com/cat3306/goworld/glog"
 	"github.com/cat3306/goworld/util"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 func ParseFlag() (string, string, int) {
@@ -28,9 +31,9 @@ func main() {
 		glog.Logger.Sugar().Errorf("conf.Load err:%s", err.Error())
 		return
 	}
+	signalChan := make(chan os.Signal, 1)
 	config := conf.GlobalConf.Select(util.ClusterTypeGame, idx)
 	if config.Deploy.IsDaemon {
-
 		ctx, err := engine.DaemonMode(&config.Deploy, fmt.Sprintf("game-%d", idx))
 		if err != nil {
 			glog.Logger.Sugar().Errorf("DaemonMode err:%s", err.Error())
@@ -43,7 +46,7 @@ func main() {
 			}
 		}()
 	}
-	server := GameServer{
+	server := &GameServer{
 		Server: engine.NewEngine(config, util.ClusterTypeGame),
 	}
 	server.AddRouter(
@@ -52,6 +55,17 @@ func main() {
 		new(router.ClientMgr).Init(server.ConnMgr),
 		new(router.PlayerMgr).Init(nil),
 	)
-
+	setupSignals(signalChan, server)
 	server.Run()
+}
+
+func setupSignals(ch chan os.Signal, server *GameServer) {
+	signal.Notify(ch, syscall.SIGTERM, syscall.SIGQUIT, os.Interrupt, syscall.SIGKILL)
+	go func() {
+		for sig := range ch {
+			server.HandlerExit()
+			glog.Logger.Sugar().Infof("%+v,game server exit graceful!", sig)
+			os.Exit(0)
+		}
+	}()
 }

@@ -2,12 +2,14 @@ package main
 
 import (
 	"fmt"
+	"github.com/cat3306/goworld/components/game/router"
 	"github.com/cat3306/goworld/engine"
 	"github.com/cat3306/goworld/glog"
 	"github.com/cat3306/goworld/protocol"
 	"github.com/cat3306/goworld/util"
 	"github.com/panjf2000/gnet/v2"
 	"github.com/valyala/bytebufferpool"
+	"math"
 	"time"
 )
 
@@ -31,13 +33,13 @@ func (g *GameServer) Run() {
 	}()
 	util.PanicRepeatRun(f, util.PanicRepeatRunArgs{
 		Sleep: time.Second,
-		Try:   20,
+		Try:   math.MaxInt64,
 	})
 }
 func (g *GameServer) OnOpen(c gnet.Conn) (out []byte, action gnet.Action) {
-	cId := util.GenConnId()
-	c.SetId(cId)
-	g.ConnMgr.Add(c)
+	//cId := util.GenConnId()
+	//c.SetId(cId)
+	//g.ConnMgr.Add(c)
 	glog.Logger.Sugar().Infof("gate clinet conn cid:%s connect", c.ID())
 	buffer := protocol.Encode(g.Config.Logic, protocol.String, util.MethodHash("SetLogic"), 0)
 
@@ -62,11 +64,15 @@ func (g *GameServer) OnTraffic(c gnet.Conn) gnet.Action {
 		glog.Logger.Sugar().Errorf("context.Bind err:%s", err.Error())
 		return gnet.None
 	}
-	if len(innerMsg.ClientIds) == 0 {
-		glog.Logger.Sugar().Errorf("client id none drop")
-		return gnet.None
-	}
+	//if len(innerMsg.ClientIds) == 0 {
+	//	glog.Logger.Sugar().Errorf("client id none drop")
+	//	return gnet.None
+	//}
 	context.SetProperty(util.InnerMsgKey, innerMsg)
 	g.ClientCtxChan <- context
 	return gnet.None
+}
+
+func (g *GameServer) HandlerExit() {
+	router.SaveData()
 }

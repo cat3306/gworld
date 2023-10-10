@@ -8,15 +8,43 @@ import (
 	"github.com/cat3306/goworld/protocol"
 	"github.com/cat3306/goworld/util"
 	"github.com/panjf2000/gnet/v2"
+	"math"
+	"strconv"
 	"time"
 )
 
 type GateServer struct {
-	*engine.Server
+	ConnMgr *engine.ConnManager
+	gnet.BuiltinEventEngine
+	eng                      gnet.Engine
+	HandlerMgr               *engine.HandlerManager
+	Config                   *conf.ServerConf
+	ct                       util.ClusterType
+	ClientCtxChan            chan *protocol.Context
 	gameClientProxy          *GameClientProxy
 	innerGameServerBroadcast uint32
 }
 
+func (g *GateServer) OnBoot(e gnet.Engine) (action gnet.Action) {
+	g.eng = e
+	go g.MainRoutine()
+	glog.Logger.Sugar().Infof("%s server is listening on:%d", g.ct, g.Config.Port)
+	return
+}
+func (g *GateServer) MainRoutine() {
+	f := func() {
+		for {
+			select {
+			case ctx := <-g.ClientCtxChan:
+				g.HandlerMgr.ExeHandler(ctx)
+			}
+		}
+	}
+	util.PanicRepeatRun(f, util.PanicRepeatRunArgs{
+		Sleep: 0,
+		Try:   math.MaxInt64,
+	})
+}
 func (g *GateServer) OnClose(c gnet.Conn, err error) (action gnet.Action) {
 	reason := ""
 	if err != nil {
@@ -38,7 +66,7 @@ func (g *GateServer) OnClose(c gnet.Conn, err error) (action gnet.Action) {
 }
 
 func (g *GateServer) OnOpen(c gnet.Conn) (out []byte, action gnet.Action) {
-	cId := util.GenConnId()
+	cId := strconv.Itoa(c.Fd()) //util.GenConnId()
 	c.SetId(cId)
 	g.ConnMgr.Add(c)
 	glog.Logger.Sugar().Infof("clinet conn cid:%s connect", c.ID())
@@ -88,6 +116,9 @@ func (g *GateServer) GameInitialize() error {
 	}
 	return cli.Start()
 }
+func (g *GateServer) OnShutdown(e gnet.Engine) {
+
+}
 func (g *GateServer) Run() {
 	addr := fmt.Sprintf("tcp://:%d", g.Config.Port)
 	f := func() {
@@ -104,6 +135,20 @@ func (g *GateServer) Run() {
 	}()
 	util.PanicRepeatRun(f, util.PanicRepeatRunArgs{
 		Sleep: time.Second,
-		Try:   20,
+		Try:   math.MaxInt64,
 	})
+}
+func NewGateServer(c *conf.ServerConf, ct util.ClusterType) *GateServer {
+	return &GateServer{
+		ConnMgr:       engine.NewConnManager(),
+		HandlerMgr:    engine.NewHandlerManager(),
+		Config:        c,
+		ct:            ct,
+		ClientCtxChan: make(chan *protocol.Context, util.ChanPacketSize),
+	}
+}
+func (g *GateServer) AddRouter(routers ...engine.IRouter) {
+	for _, v := range routers {
+		g.HandlerMgr.RegisterRouter(v)
+	}
 }

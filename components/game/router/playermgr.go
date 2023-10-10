@@ -1,6 +1,7 @@
 package router
 
 import (
+	"encoding/json"
 	"github.com/cat3306/goworld/engine"
 	"github.com/cat3306/goworld/engine/gameobject"
 	"github.com/cat3306/goworld/glog"
@@ -8,12 +9,17 @@ import (
 	"github.com/cat3306/goworld/util"
 )
 
+var (
+	PlayerManager *PlayerMgr
+)
+
 type PlayerMgr struct {
-	Players gameobject.GameObjectSet
+	Players gameobject.GameObjectSet `json:"players"`
 }
 
 func (p *PlayerMgr) Init(v interface{}) engine.IRouter {
 	p.Players = gameobject.GameObjectSet{}
+	PlayerManager = p
 	return p
 }
 
@@ -47,4 +53,16 @@ func (p *PlayerMgr) CreatePlayer(ctx *protocol.Context) {
 	player.OnCreated(playerId)
 	p.Players.Add(player)
 	clientMgr.Broadcast(ctx, msg.ClientIds, playerId)
+}
+func (p *PlayerMgr) SaveData() {
+	if len(p.Players) == 0 {
+		return
+	}
+	raw, err := json.Marshal(p)
+	if err != nil {
+		glog.Logger.Sugar().Infof("SaveData err:%s", err.Error())
+		return
+	}
+	glog.Logger.Sugar().Infof("%s", string(raw))
+
 }

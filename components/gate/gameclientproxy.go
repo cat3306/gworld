@@ -6,6 +6,7 @@ import (
 	"github.com/cat3306/goworld/protocol"
 	"github.com/cat3306/goworld/util"
 	"github.com/panjf2000/gnet/v2"
+	"strconv"
 	"time"
 )
 
@@ -158,7 +159,14 @@ func (g *GameClientProxyRouter) SetLogic(ctx *protocol.Context) {
 	}
 	logicHash := util.MethodHash(logic)
 	g.server.gameClientProxy.logicMgr.Add(logicHash, ctx.Conn)
+	msg := &engine.InnerMsg{
+		Properties: map[string]string{
+			"gateIdx": strconv.Itoa(g.server.Config.Idx),
+		},
+	}
+	//buffer := protocol.Encode(g.server.Config.Idx, protocol.String, util.MethodHash("OnSetGateIdx"), util.LogicNone)
 	glog.Logger.Sugar().Infof("set logic from game,logic:%s", logic)
+	ctx.SendWithParams(msg, protocol.ProtoBuffer, util.MethodHash("OnSetGateIdx"))
 }
 
 //出口
