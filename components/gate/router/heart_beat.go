@@ -10,7 +10,7 @@ type HeartBeat struct {
 	engine.BaseRouter
 }
 
-func (h *HeartBeat) Init(v interface{}) engine.IRouter {
+func (h *HeartBeat) Init(v ...interface{}) engine.IRouter {
 	return h
 }
 func (h *HeartBeat) HeartBeat(ctx *protocol.Context) {

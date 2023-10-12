@@ -12,7 +12,7 @@ type RoomMgr struct {
 	rooms map[string]*Room
 }
 
-func (r *RoomMgr) Init(v interface{}) engine.IRouter {
+func (r *RoomMgr) Init(v ...interface{}) engine.IRouter {
 	r.rooms = make(map[string]*Room)
 	return r
 }
@@ -105,7 +105,6 @@ type JoinRoomReq struct {
 	Pwd    string `json:"Pwd"`
 }
 
-//
 func (r *RoomMgr) JoinRoom(ctx *protocol.Context) {
 	//req := &JoinRoomReq{}
 	//if err := ctx.Bind(req); err != nil {

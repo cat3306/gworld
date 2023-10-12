@@ -1,4 +1,4 @@
-package main
+package router
 
 import (
 	"github.com/cat3306/goworld/engine"
@@ -7,12 +7,15 @@ import (
 )
 
 type GateDispatcher struct {
-	gate *GateServer
+	logicMgr *engine.LogicConnMgr
 	engine.BaseRouter
 }
 
-func (g *GateDispatcher) Init(v interface{}) engine.IRouter {
-	g.gate = v.(*GateServer)
+func (g *GateDispatcher) Init(v ...interface{}) engine.IRouter {
+	if len(v) != 0 {
+		g.logicMgr = v[0].(*engine.LogicConnMgr)
+
+	}
 	return g
 }
 
@@ -28,12 +31,12 @@ func (g *GateDispatcher) Dispatcher(ctx *protocol.Context) {
 		glog.Logger.Sugar().Errorf("Bind err:%s", err)
 	}
 
-	c, ok := g.gate.gameClientProxy.logicMgr.GetByLogic(ctx.Logic)
+	connMgr, ok := g.logicMgr.GetByLogic(ctx.Logic)
 	if !ok {
 		glog.Logger.Sugar().Errorf("not found logic game server,logic:%d", ctx.Logic)
 		return
 	}
-	if c.Len() == 0 {
+	if connMgr.Len() == 0 {
 		glog.Logger.Sugar().Errorf("not found game server,logic:%d", ctx.Logic)
 		return
 	}
@@ -44,7 +47,7 @@ func (g *GateDispatcher) Dispatcher(ctx *protocol.Context) {
 		Properties:     map[string]string{},
 	}
 	//glog.Logger.Info("haha")
-	c.SendSomeOne(protocol.Encode(s, protocol.ProtoBuffer, req.Method, ctx.Logic))
+	connMgr.SendRandOne(protocol.Encode(s, protocol.ProtoBuffer, req.Method, ctx.Logic))
 }
 
 func (g *GateDispatcher) HeartBeat(ctx *protocol.Context) {
@@ -81,5 +84,5 @@ func (g *GateDispatcher) InnerOnBroadcast(ctx *protocol.Context) {
 			Payload: payload,
 		},
 	}, protocol.ProtoBuffer, pro, 0)
-	g.gate.gameClientProxy.logicMgr.Broadcast(buffer)
+	g.logicMgr.Broadcast(buffer)
 }

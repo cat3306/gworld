@@ -33,29 +33,35 @@ func (c *Context) Bind(v interface{}) error {
 }
 
 func (c *Context) Send(v interface{}) {
-	err := c.AsyncWrite(Encode(v, c.CodeType, c.Proto, c.Logic))
+	buffer := Encode(v, c.CodeType, c.Proto, c.Logic)
+	err := c.Conn.AsyncWrite(buffer.Bytes(), func(c gnet.Conn) error {
+		bytebufferpool.Put(buffer)
+		return nil
+	})
 	if err != nil {
-		glog.Logger.Sugar().Errorf("AsyncWrite err:%s", err.Error())
+		glog.Logger.Sugar().Errorf("ctx Send err:%s", err.Error())
 	}
 }
+
 func (c *Context) SendWithCodeType(v interface{}, codeType CodeType) {
-	err := c.AsyncWrite(Encode(v, codeType, c.Proto, c.Logic))
+	buffer := Encode(v, codeType, c.Proto, c.Logic)
+	err := c.Conn.AsyncWrite(buffer.Bytes(), func(c gnet.Conn) error {
+		bytebufferpool.Put(buffer)
+		return nil
+	})
 	if err != nil {
 		glog.Logger.Sugar().Errorf("AsyncWrite err:%s", err.Error())
 	}
 }
 func (c *Context) SendWithParams(v interface{}, codeType CodeType, hash uint32) {
-	err := c.AsyncWrite(Encode(v, codeType, hash, c.Logic))
-	if err != nil {
-		glog.Logger.Sugar().Errorf("AsyncWrite err:%s", err.Error())
-	}
-}
-
-func (c *Context) AsyncWrite(buffer *bytebufferpool.ByteBuffer) error {
-	return c.Conn.AsyncWrite(buffer.Bytes(), func(c gnet.Conn) error {
+	buffer := Encode(v, codeType, hash, c.Logic)
+	err := c.Conn.AsyncWrite(buffer.Bytes(), func(c gnet.Conn) error {
 		bytebufferpool.Put(buffer)
 		return nil
 	})
+	if err != nil {
+		glog.Logger.Sugar().Errorf("AsyncWrite err:%s", err.Error())
+	}
 }
 
 func (c *Context) CheckClientAuth() bool {

@@ -7,7 +7,14 @@ const (
 	String      = CodeType(1)
 	Json        = CodeType(2)
 	ProtoBuffer = CodeType(3)
-	Uint32      = CodeType(4)
+)
+
+var (
+	coderSet = map[CodeType]Coder{
+		Json:        &jsonCoder{},
+		String:      &rawString{},
+		ProtoBuffer: &protocBufferCoder{},
+	}
 )
 
 type Coder interface {
@@ -17,16 +24,9 @@ type Coder interface {
 }
 
 func GameCoder(codeType CodeType) Coder {
-	switch codeType {
-	case Json:
-		return &jsonCoder{CoderType: Json}
-	case String:
-		return &rawString{CodeType: String}
-	case ProtoBuffer:
-		return &protocBufferCoder{CoderType: ProtoBuffer}
-	case Uint32:
-		return &rawUint32{CodeType: Uint32}
-	default:
-		return &rawString{}
+	coder := coderSet[codeType]
+	if coder == nil {
+		coder = coderSet[Json]
 	}
+	return coder
 }

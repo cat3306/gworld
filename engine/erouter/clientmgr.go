@@ -1,4 +1,4 @@
-package router
+package erouter
 
 import (
 	"github.com/cat3306/goworld/engine"
@@ -10,10 +10,10 @@ import (
 )
 
 var (
-	clientMgr *ClientMgr
+	GameClientMgr *ClientMgr
 )
 
-//client
+// client
 type GameClient struct {
 	ClientId     string
 	ServerConnId string
@@ -27,10 +27,10 @@ type ClientMgr struct {
 	gateClients map[string][]*GameClient
 }
 
-func (c *ClientMgr) Init(v interface{}) engine.IRouter {
+func (c *ClientMgr) Init(v ...interface{}) engine.IRouter {
 	c.clients = make(map[string]*GameClient)
-	clientMgr = c
-	mgr := v.(*engine.ConnManager)
+	GameClientMgr = c
+	mgr := v[0].(*engine.ConnManager)
 	c.gateConnMgr = mgr
 	return c
 }
@@ -60,6 +60,7 @@ func (c *ClientMgr) OnDisconnect(ctx *protocol.Context) {
 	}
 	glog.Logger.Sugar().Infof("client:%s disconnect", msg.ClientIds[0])
 	delete(c.clients, msg.ClientIds[0])
+
 }
 func (c *ClientMgr) GetInfo(id string) (*GameClient, bool) {
 	v, o := c.clients[id]

@@ -3,6 +3,7 @@ package protocol
 import (
 	"encoding/binary"
 	"errors"
+	"github.com/cat3306/goworld/glog"
 	"github.com/panjf2000/gnet/v2"
 	"github.com/valyala/bytebufferpool"
 )
@@ -20,46 +21,57 @@ import (
 // * +-----------------------------------------------------------+-----------+
 
 const (
-	payloadLen  = uint32(4)
-	protocolLen = uint32(4)
-	codeTypeLen = uint32(2)
-	logicLen    = uint32(4)
+	payloadLen   = uint32(4)
+	protocolLen  = uint32(4)
+	codeTypeLen  = uint32(2)
+	logicLen     = uint32(4)
+	maxBufferCap = 1 << 24 //16M
 )
 
 var (
 	packetEndian        = binary.LittleEndian
 	ErrIncompletePacket = errors.New("incomplete packet")
 	ErrTooLargePacket   = errors.New("too large packet")
+	ErrDiscardedPacket  = errors.New("discarded not equal msg len")
 )
 
 func Decode(c gnet.Conn) (*Context, error) {
 
 	bodyOffset := int(payloadLen + protocolLen + codeTypeLen + logicLen)
-	buf, err := c.Next(bodyOffset)
+	headerBuffer, err := c.Peek(bodyOffset)
 	if err != nil {
 		return nil, err
 	}
-
-	bodyLen := packetEndian.Uint32(buf[:payloadLen])
-	protocol := packetEndian.Uint32(buf[payloadLen : payloadLen+protocolLen])
-	codeType := packetEndian.Uint16(buf[payloadLen+protocolLen : payloadLen+protocolLen+codeTypeLen])
-	logic := packetEndian.Uint32(buf[payloadLen+protocolLen+codeTypeLen : bodyOffset])
-	msgLen := bodyOffset + int(bodyLen)
-	if msgLen > maxByte {
-		//c.Close()
-		return nil, ErrTooLargePacket
-	}
-	if c.InboundBuffered() < int(bodyLen) {
+	if len(headerBuffer) < bodyOffset {
 		return nil, ErrIncompletePacket
 	}
-	buf, err = c.Next(int(bodyLen))
+	bodyLen := packetEndian.Uint32(headerBuffer[:payloadLen])
+	protocol := packetEndian.Uint32(headerBuffer[payloadLen : payloadLen+protocolLen])
+	codeType := packetEndian.Uint16(headerBuffer[payloadLen+protocolLen : payloadLen+protocolLen+codeTypeLen])
+	logic := packetEndian.Uint32(headerBuffer[payloadLen+protocolLen+codeTypeLen : bodyOffset])
+	msgLen := bodyOffset + int(bodyLen)
+	if msgLen > maxBufferCap {
+		c.Close()
+		return nil, ErrTooLargePacket
+	}
+
+	if c.InboundBuffered() < msgLen {
+		return nil, ErrIncompletePacket
+	}
+	msgBuffer, err := c.Peek(msgLen)
 	if err != nil {
 		return nil, err
 	}
+	discarded, err := c.Discard(msgLen)
+	if err != nil {
+		return nil, err
+	}
+	if discarded != msgLen {
+		glog.Logger.Sugar().Errorf("discarded")
+		return nil, ErrDiscardedPacket
+	}
 	buffer := bytebufferpool.Get()
-	_, _ = buffer.Write(buf)
-	//payload := make([]byte, len(buf))
-	//copy(payload, buf)
+	_, _ = buffer.Write(msgBuffer[bodyOffset:])
 	ctx := &Context{
 		Payload:  buffer,
 		CodeType: CodeType(codeType),

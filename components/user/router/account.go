@@ -29,7 +29,7 @@ const (
 	Login         = ""
 )
 
-func (a *Account) Init(v interface{}) engine.IRouter {
+func (a *Account) Init(v ...interface{}) engine.IRouter {
 	//a.salt = conf.GameConfig.Account.Salt
 	return a
 }

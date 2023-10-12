@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"fmt"
@@ -25,6 +25,9 @@ type GateServer struct {
 	innerGameServerBroadcast uint32
 }
 
+func (g *GateServer) GetGameClientProxy() *GameClientProxy {
+	return g.gameClientProxy
+}
 func (g *GateServer) OnBoot(e gnet.Engine) (action gnet.Action) {
 	g.eng = e
 	go g.MainRoutine()
@@ -97,8 +100,6 @@ func (g *GateServer) OnTraffic(c gnet.Conn) gnet.Action {
 }
 
 func (g *GateServer) GameInitialize() error {
-	g.gameClientProxy = NewGameClientProxy().SetServer(g)
-	g.gameClientProxy.AddRouter(new(GameClientProxyRouter).Init(g))
 	cli, err := gnet.NewClient(g.gameClientProxy)
 	if err != nil {
 		return err
@@ -138,17 +139,18 @@ func (g *GateServer) Run() {
 		Try:   math.MaxInt64,
 	})
 }
-func NewGateServer(c *conf.ServerConf, ct util.ClusterType) *GateServer {
-	return &GateServer{
-		ConnMgr:       engine.NewConnManager(),
-		HandlerMgr:    engine.NewHandlerManager(),
-		Config:        c,
-		ct:            ct,
-		ClientCtxChan: make(chan *protocol.Context, util.ChanPacketSize),
-	}
-}
 func (g *GateServer) AddRouter(routers ...engine.IRouter) {
 	for _, v := range routers {
 		g.HandlerMgr.RegisterRouter(v)
+	}
+}
+func NewGateServer(c *conf.ServerConf, ct util.ClusterType) *GateServer {
+	return &GateServer{
+		ConnMgr:         engine.NewConnManager(),
+		HandlerMgr:      engine.NewHandlerManager(),
+		Config:          c,
+		ct:              ct,
+		ClientCtxChan:   make(chan *protocol.Context, util.ChanPacketSize),
+		gameClientProxy: NewGameClientProxy(),
 	}
 }

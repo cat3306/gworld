@@ -38,17 +38,20 @@ func (c *ConnManager) Broadcast(raw []byte) {
 	c.locker.RLock()
 	defer c.locker.RUnlock()
 	for _, v := range c.connections {
-		err := v.AsyncWrite(raw, nil)
+		_, err := v.Write(raw)
 		if err != nil {
 			glog.Logger.Sugar().Errorf("AsyncWrite err:%s", err.Error())
 		}
 	}
 }
-func (c *ConnManager) SendByOne(raw []byte, id string) {
+func (c *ConnManager) SendOne(buffer *bytebufferpool.ByteBuffer, id string) {
 	c.locker.RLock()
 	defer c.locker.RUnlock()
 	if conn, ok := c.connections[id]; ok {
-		err := conn.AsyncWrite(raw, nil)
+		err := conn.AsyncWrite(buffer.Bytes(), func(c gnet.Conn) error {
+			bytebufferpool.Put(buffer)
+			return nil
+		})
 		if err != nil {
 			glog.Logger.Sugar().Errorf("AsyncWrite err:%s", err.Error())
 		}
@@ -56,7 +59,7 @@ func (c *ConnManager) SendByOne(raw []byte, id string) {
 		glog.Logger.Sugar().Errorf("not found conn:%s", id)
 	}
 }
-func (c *ConnManager) SendBySomeone(buffer *bytebufferpool.ByteBuffer, ids []string, args string) {
+func (c *ConnManager) SendSomeone(buffer *bytebufferpool.ByteBuffer, ids []string, args string) {
 	c.locker.RLock()
 	defer func() {
 		c.locker.RUnlock()
@@ -64,7 +67,7 @@ func (c *ConnManager) SendBySomeone(buffer *bytebufferpool.ByteBuffer, ids []str
 	}()
 	for _, id := range ids {
 		if conn, ok := c.connections[id]; ok {
-			err := conn.AsyncWrite(buffer.Bytes(), nil)
+			_, err := conn.Write(buffer.Bytes())
 			if err != nil {
 				glog.Logger.Sugar().Errorf("AsyncWrite err:%s", err.Error())
 			}
@@ -81,7 +84,7 @@ func (c *ConnManager) BroadcastExceptSelf(raw []byte, cid string) {
 		if v.ID() == cid {
 			continue
 		}
-		err := v.AsyncWrite(raw, nil)
+		_, err := v.Write(raw)
 		if err != nil {
 			glog.Logger.Sugar().Errorf("AsyncWrite err:%s", err.Error())
 		}
@@ -93,16 +96,16 @@ func (c *ConnManager) Len() int {
 	return len(c.connections)
 }
 
-func (c *ConnManager) SendSomeOne(buffer *bytebufferpool.ByteBuffer) {
+func (c *ConnManager) SendRandOne(buffer *bytebufferpool.ByteBuffer) {
 	c.locker.RLock()
 	defer func() {
 		c.locker.RUnlock()
 		bytebufferpool.Put(buffer)
 	}()
 	for _, conn := range c.connections {
-		err := conn.AsyncWrite(buffer.Bytes(), nil)
+		_, err := conn.Write(buffer.Bytes())
 		if err != nil {
-			glog.Logger.Sugar().Errorf("AsyncWrite err:%s", err.Error())
+			glog.Logger.Sugar().Errorf("Write err:%s", err.Error())
 		}
 		return
 	}

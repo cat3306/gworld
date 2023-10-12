@@ -4,9 +4,11 @@ import (
 	"flag"
 	"fmt"
 	"github.com/cat3306/goworld/components/user/router"
+	"github.com/cat3306/goworld/components/user/server"
 	"github.com/cat3306/goworld/components/user/thirdmodule"
 	"github.com/cat3306/goworld/conf"
 	"github.com/cat3306/goworld/engine"
+	"github.com/cat3306/goworld/engine/erouter"
 	"github.com/cat3306/goworld/glog"
 	"github.com/cat3306/goworld/util"
 )
@@ -43,14 +45,12 @@ func main() {
 			}
 		}()
 	}
-	server := GameServer{
-		Server: engine.NewEngine(config, util.ClusterTypeGame),
-	}
+	s := server.NewUserServer(config, util.ClusterTypeGame)
 	thirdmodule.Init()
-	server.AddRouter(
+	s.AddRouter(
 		new(router.Account).Init(nil),
-		new(router.ClientMgr).Init(nil),
+		new(erouter.ClientMgr).Init(s.ConnMgr),
 	)
 
-	server.Run()
+	s.Run()
 }

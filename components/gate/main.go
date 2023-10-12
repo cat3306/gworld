@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/cat3306/goworld/components/gate/router"
+	"github.com/cat3306/goworld/components/gate/server"
 	"github.com/cat3306/goworld/conf"
 	"github.com/cat3306/goworld/engine"
 	"github.com/cat3306/goworld/glog"
@@ -42,15 +43,18 @@ func main() {
 			}
 		}()
 	}
-	server := NewGateServer(config, util.ClusterTypeGate)
-	server.AddRouter(
-		new(GateDispatcher).Init(server),
-		new(router.Auth).Init(nil),
+	gate := server.NewGateServer(config, util.ClusterTypeGate)
+	gate.AddRouter(
+		new(router.GateDispatcher).Init(gate.GetGameClientProxy().GetLogicMgr()),
+		new(router.Auth).Init(),
+	)
+	gate.GetGameClientProxy().AddRouter(
+		new(router.GameClientProxyRouter).Init(gate.ConnMgr, gate.GetGameClientProxy().GetLogicMgr()),
 	)
 	//server.AddHandler("dispatcher", server.Dispatcher)
-	err = server.GameInitialize()
+	err = gate.GameInitialize()
 	if err != nil {
 		panic(err)
 	}
-	server.Run()
+	gate.Run()
 }

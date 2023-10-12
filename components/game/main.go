@@ -4,8 +4,10 @@ import (
 	"flag"
 	"fmt"
 	"github.com/cat3306/goworld/components/game/router"
+	"github.com/cat3306/goworld/components/game/server"
 	"github.com/cat3306/goworld/conf"
 	"github.com/cat3306/goworld/engine"
+	"github.com/cat3306/goworld/engine/erouter"
 	"github.com/cat3306/goworld/glog"
 	"github.com/cat3306/goworld/util"
 	"os"
@@ -46,20 +48,22 @@ func main() {
 			}
 		}()
 	}
-	server := &GameServer{
-		Server: engine.NewEngine(config, util.ClusterTypeGame),
-	}
-	server.AddRouter(
+
+	//server := &GameServer{
+	//	Server: engine.NewEngine(config, util.ClusterTypeGame),
+	//}
+	gameServer := server.NewGameServer(config, util.ClusterTypeGame)
+	gameServer.AddRouter(
 		new(router.HeartBeat),
-		new(router.RoomMgr).Init(nil),
-		new(router.ClientMgr).Init(server.ConnMgr),
-		new(router.PlayerMgr).Init(nil),
+		new(router.RoomMgr),
+		new(erouter.ClientMgr).Init(gameServer.ConnMgr),
+		new(router.PlayerMgr).Init(),
 	)
-	setupSignals(signalChan, server)
-	server.Run()
+	setupSignals(signalChan, gameServer)
+	gameServer.Run()
 }
 
-func setupSignals(ch chan os.Signal, server *GameServer) {
+func setupSignals(ch chan os.Signal, server *server.GameServer) {
 	signal.Notify(ch, syscall.SIGTERM, syscall.SIGQUIT, os.Interrupt, syscall.SIGKILL)
 	go func() {
 		for sig := range ch {

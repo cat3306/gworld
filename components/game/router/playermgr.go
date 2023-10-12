@@ -3,6 +3,7 @@ package router
 import (
 	"encoding/json"
 	"github.com/cat3306/goworld/engine"
+	"github.com/cat3306/goworld/engine/erouter"
 	"github.com/cat3306/goworld/engine/gameobject"
 	"github.com/cat3306/goworld/glog"
 	"github.com/cat3306/goworld/protocol"
@@ -17,8 +18,8 @@ type PlayerMgr struct {
 	Players gameobject.GameObjectSet `json:"players"`
 }
 
-func (p *PlayerMgr) Init(v interface{}) engine.IRouter {
-	p.Players = gameobject.GameObjectSet{}
+func (p *PlayerMgr) Init(v ...interface{}) engine.IRouter {
+	p.Players = make(gameobject.GameObjectSet)
 	PlayerManager = p
 	return p
 }
@@ -38,7 +39,7 @@ func (p *PlayerMgr) PlayerMove(ctx *protocol.Context) {
 	}
 	obj.OnMove(req.Vector3, gameobject.Vector3{X: req.CX, Y: req.Yaw})
 	//engine.GameBroadcast(ctx, msg.ClientMsg.Payload, msg.ClientIds)
-	clientMgr.Broadcast(ctx, nil, msg.ClientMsg.Payload)
+	erouter.GameClientMgr.Broadcast(ctx, nil, msg.ClientMsg.Payload)
 }
 
 func (p *PlayerMgr) CreatePlayer(ctx *protocol.Context) {
@@ -52,7 +53,7 @@ func (p *PlayerMgr) CreatePlayer(ctx *protocol.Context) {
 	player := &gameobject.Player{}
 	player.OnCreated(playerId)
 	p.Players.Add(player)
-	clientMgr.Broadcast(ctx, msg.ClientIds, playerId)
+	erouter.GameClientMgr.Broadcast(ctx, msg.ClientIds, playerId)
 }
 func (p *PlayerMgr) SaveData() {
 	if len(p.Players) == 0 {

@@ -2,6 +2,7 @@ package engine
 
 import (
 	"errors"
+	"github.com/cat3306/goworld/glog"
 	"github.com/cat3306/goworld/protocol"
 	"github.com/cat3306/goworld/util"
 )
@@ -15,6 +16,16 @@ func GameBind(v interface{}, ctx *protocol.Context) (*InnerMsg, error) {
 	msg, err := GetCtxInnerMsg(ctx)
 	if err != nil {
 		return nil, err
+	}
+	if msg == nil {
+		glog.Logger.Sugar().Errorf("asdasdasdasdasd")
+
+	}
+	if msg.ClientMsg == nil {
+		glog.Logger.Sugar().Errorf("ClientMsg asdasdasdasdasd")
+	}
+	if msg.ClientMsg.Payload == nil {
+		glog.Logger.Sugar().Errorf("Payload asdasdasdasdasd")
 	}
 	return msg, protocol.GameCoder(protocol.CodeType(msg.ClientCodeType)).Unmarshal(msg.ClientMsg.Payload, v)
 }

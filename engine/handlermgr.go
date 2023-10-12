@@ -20,18 +20,36 @@ type GoHandler func(c *protocol.Context, none struct{})
 
 func NewHandlerManager() *HandlerManager {
 	return &HandlerManager{
-		handlers:  make(map[uint32]Handler),
-		goHandler: make(map[uint32]GoHandler),
-		GPool:     goroutine.Default(),
+		handlers:        make(map[uint32]Handler),
+		goHandler:       make(map[uint32]GoHandler),
+		maxPreHandler:   8,
+		maxDeferHandler: 8,
+		GPool:           goroutine.Default(),
 	}
 }
 
 type HandlerManager struct {
-	handlers  map[uint32]Handler
-	goHandler map[uint32]GoHandler
-	GPool     *goroutine.Pool
+	handlers        map[uint32]Handler
+	goHandler       map[uint32]GoHandler
+	preHandlers     []Handler
+	deferHandlers   []Handler
+	maxPreHandler   int
+	maxDeferHandler int
+	GPool           *goroutine.Pool
 }
 
+func (h *HandlerManager) SetPreHandlers(hs ...Handler) {
+	if len(hs) > h.maxPreHandler {
+		panic(errors.New("too many pre handler"))
+	}
+	h.preHandlers = hs
+}
+func (h *HandlerManager) SetDeferPreHandlers(hs ...Handler) {
+	if len(hs) > h.maxDeferHandler {
+		panic(errors.New("too many defer handler"))
+	}
+	h.deferHandlers = hs
+}
 func (h *HandlerManager) Register(hashCode uint32, handler Handler) {
 	if _, ok := h.handlers[hashCode]; ok {
 		panic(fmt.Sprintf("Register repeated method:%d", hashCode))
@@ -70,7 +88,7 @@ func (h *HandlerManager) RegisterRouter(iG IRouter) {
 	}
 }
 
-//函数签名首字母大写才会被注入
+// 函数签名首字母大写才会被注入
 func checkoutMethod(m string) bool {
 	if len(m) == 0 {
 		return false
@@ -80,18 +98,18 @@ func checkoutMethod(m string) bool {
 	}
 	return false
 }
-func (h *HandlerManager) GetHandler(proto uint32) Handler {
+func (h *HandlerManager) getHandler(proto uint32) Handler {
 	f := h.handlers[proto]
 	return f
 }
-func (h *HandlerManager) GetGoHandler(proto uint32) GoHandler {
+func (h *HandlerManager) getGoHandler(proto uint32) GoHandler {
 	f := h.goHandler[proto]
 	return f
 }
 
-//同步handler
+// 同步handler
 func (h *HandlerManager) exeSyncHandler(ctx *protocol.Context) error {
-	f := h.GetHandler(ctx.Proto)
+	f := h.getHandler(ctx.Proto)
 	if f != nil {
 		f(ctx)
 		return nil
@@ -99,9 +117,9 @@ func (h *HandlerManager) exeSyncHandler(ctx *protocol.Context) error {
 	return ErrHandlerNotFound
 }
 
-//异步handler
+// 异步handler
 func (h *HandlerManager) exeAsyncHandler(ctx *protocol.Context) error {
-	f := h.GetGoHandler(ctx.Proto)
+	f := h.getGoHandler(ctx.Proto)
 	if f != nil {
 		err := h.GPool.Submit(func() {
 			f(ctx, struct{}{})
@@ -116,6 +134,10 @@ func (h *HandlerManager) exeAsyncHandler(ctx *protocol.Context) error {
 }
 
 func (h *HandlerManager) ExeHandler(ctx *protocol.Context) {
+
+	for i := 0; i < len(h.preHandlers); i++ {
+		h.preHandlers[i](ctx)
+	}
 	err := h.exeSyncHandler(ctx)
 	if !errors.Is(err, ErrHandlerNotFound) {
 		return
@@ -123,5 +145,8 @@ func (h *HandlerManager) ExeHandler(ctx *protocol.Context) {
 	err = h.exeAsyncHandler(ctx)
 	if err != nil {
 		glog.Logger.Sugar().Errorf("ExeHandler err:%s,pro:%d", err.Error(), ctx.Proto)
+	}
+	for i := 0; i < len(h.deferHandlers); i++ {
+		h.deferHandlers[i](ctx)
 	}
 }
