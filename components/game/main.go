@@ -7,7 +7,6 @@ import (
 	"github.com/cat3306/goworld/components/game/server"
 	"github.com/cat3306/goworld/conf"
 	"github.com/cat3306/goworld/engine"
-	"github.com/cat3306/goworld/engine/erouter"
 	"github.com/cat3306/goworld/glog"
 	"github.com/cat3306/goworld/util"
 	"os"
@@ -54,9 +53,9 @@ func main() {
 	//}
 	gameServer := server.NewGameServer(config, util.ClusterTypeGame)
 	gameServer.AddRouter(
+		new(engine.ClientMgr).Init(gameServer.ConnMgr),
 		new(router.HeartBeat),
 		new(router.RoomMgr),
-		new(erouter.ClientMgr).Init(gameServer.ConnMgr),
 		new(router.PlayerMgr).Init(),
 	)
 	setupSignals(signalChan, gameServer)

@@ -68,7 +68,7 @@ func (g *GameClientProxyRouter) CallClient(ctx *protocol.Context) {
 		glog.Logger.Sugar().Errorf("HandleGame err:%s", err.Error())
 		return
 	}
-	buffer := protocol.Encode(msg.ClientMsg.Payload, protocol.CodeType(msg.ClientCodeType), msg.ClientMsg.Method, 0)
+	buffer := protocol.Encode(msg.ClientMsg.Payload, protocol.CodeType(msg.ClientCodeType), msg.ClientMsg.Method, util.LogicNone)
 	//glog.Logger.Sugar().Infof("%s,%d", buffer.Bytes()[14:], protocol.CodeType(msg.ClientCodeType))
 	g.connMgr.SendSomeone(buffer, msg.ClientIds, "CallClient")
 }

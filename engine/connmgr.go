@@ -34,11 +34,14 @@ func (c *ConnManager) Get(id string) (bool, gnet.Conn) {
 	con, ok := c.connections[id]
 	return ok, con
 }
-func (c *ConnManager) Broadcast(raw []byte) {
+func (c *ConnManager) Broadcast(buffer *bytebufferpool.ByteBuffer) {
 	c.locker.RLock()
-	defer c.locker.RUnlock()
+	defer func() {
+		c.locker.RUnlock()
+		bytebufferpool.Put(buffer)
+	}()
 	for _, v := range c.connections {
-		_, err := v.Write(raw)
+		_, err := v.Write(buffer.Bytes())
 		if err != nil {
 			glog.Logger.Sugar().Errorf("AsyncWrite err:%s", err.Error())
 		}
@@ -77,14 +80,14 @@ func (c *ConnManager) SendSomeone(buffer *bytebufferpool.ByteBuffer, ids []strin
 	}
 
 }
-func (c *ConnManager) BroadcastExceptSelf(raw []byte, cid string) {
+func (c *ConnManager) BroadcastExceptSelf(buffer *bytebufferpool.ByteBuffer, cid string) {
 	c.locker.RLock()
 	defer c.locker.RUnlock()
 	for _, v := range c.connections {
 		if v.ID() == cid {
 			continue
 		}
-		_, err := v.Write(raw)
+		_, err := v.Write(buffer.Bytes())
 		if err != nil {
 			glog.Logger.Sugar().Errorf("AsyncWrite err:%s", err.Error())
 		}

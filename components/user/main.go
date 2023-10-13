@@ -8,7 +8,6 @@ import (
 	"github.com/cat3306/goworld/components/user/thirdmodule"
 	"github.com/cat3306/goworld/conf"
 	"github.com/cat3306/goworld/engine"
-	"github.com/cat3306/goworld/engine/erouter"
 	"github.com/cat3306/goworld/glog"
 	"github.com/cat3306/goworld/util"
 )
@@ -49,7 +48,7 @@ func main() {
 	thirdmodule.Init()
 	s.AddRouter(
 		new(router.Account).Init(nil),
-		new(erouter.ClientMgr).Init(s.ConnMgr),
+		new(engine.ClientMgr).Init(s.ConnMgr),
 	)
 
 	s.Run()

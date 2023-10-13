@@ -3,7 +3,6 @@ package router
 import (
 	"encoding/json"
 	"github.com/cat3306/goworld/engine"
-	"github.com/cat3306/goworld/engine/erouter"
 	"github.com/cat3306/goworld/engine/gameobject"
 	"github.com/cat3306/goworld/glog"
 	"github.com/cat3306/goworld/protocol"
@@ -21,6 +20,7 @@ type PlayerMgr struct {
 func (p *PlayerMgr) Init(v ...interface{}) engine.IRouter {
 	p.Players = make(gameobject.GameObjectSet)
 	PlayerManager = p
+	engine.GameClientMgr.SetDisconnectCallback(p.Remove)
 	return p
 }
 
@@ -39,7 +39,7 @@ func (p *PlayerMgr) PlayerMove(ctx *protocol.Context) {
 	}
 	obj.OnMove(req.Vector3, gameobject.Vector3{X: req.CX, Y: req.Yaw})
 	//engine.GameBroadcast(ctx, msg.ClientMsg.Payload, msg.ClientIds)
-	erouter.GameClientMgr.Broadcast(ctx, nil, msg.ClientMsg.Payload)
+	engine.GameClientMgr.Broadcast(ctx, nil, msg.ClientMsg.Payload)
 }
 
 func (p *PlayerMgr) CreatePlayer(ctx *protocol.Context) {
@@ -52,8 +52,21 @@ func (p *PlayerMgr) CreatePlayer(ctx *protocol.Context) {
 	playerId := util.GenGameObjectId()
 	player := &gameobject.Player{}
 	player.OnCreated(playerId)
+	client, _ := engine.GameClientMgr.GetInfo(msg.ClientIds[0])
+	player.SetGameClient(client)
 	p.Players.Add(player)
-	erouter.GameClientMgr.Broadcast(ctx, msg.ClientIds, playerId)
+	engine.GameClientMgr.Broadcast(ctx, msg.ClientIds, playerId)
+}
+func (p *PlayerMgr) Remove(clientId string) {
+	for _, v := range p.Players {
+		if v.GetGameClient().ClientId == clientId {
+			p.remove(v.GetId())
+			break
+		}
+	}
+}
+func (p *PlayerMgr) remove(id string) {
+	delete(p.Players, id)
 }
 func (p *PlayerMgr) SaveData() {
 	if len(p.Players) == 0 {

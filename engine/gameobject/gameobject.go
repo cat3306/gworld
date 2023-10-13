@@ -19,6 +19,8 @@ type IObject interface {
 	OnMove(pos Vector3, rot Vector3)
 	GetId() string
 	OnSaveData() []byte
+	SetGameClient(client *GameClient)
+	GetGameClient() *GameClient
 }
 
 type GameObject struct {
@@ -30,10 +32,16 @@ type GameObject struct {
 	InterestedIn GameObjectSet `json:"-"`
 	InterestedBy GameObjectSet `json:"-"`
 	Components   GameObjectSet `json:"-"`
-	client       *GameClient
+	gameClient   *GameClient
 	Property     map[string]interface{}
 }
 
+func (g *GameObject) GetGameClient() *GameClient {
+	return g.gameClient
+}
+func (g *GameObject) SetGameClient(client *GameClient) {
+	g.gameClient = client
+}
 func (g *GameObject) OnMigrateOut() {
 
 }
