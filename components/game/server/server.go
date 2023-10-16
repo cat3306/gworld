@@ -88,7 +88,7 @@ func (g *GameServer) OnTraffic(c gnet.Conn) gnet.Action {
 	if ctx == nil {
 		panic("context nil")
 	}
-
+	//glog.Logger.Sugar().Info(ctx.Proto)
 	g.ClientCtxChan <- ctx
 	return gnet.None
 }

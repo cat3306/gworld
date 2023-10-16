@@ -78,6 +78,7 @@ func (g *GateDispatcher) InnerOnBroadcast(ctx *protocol.Context) {
 	if ctx.Payload != nil {
 		payload = ctx.Payload.Bytes()
 	}
+	//glog.Logger.Sugar().Infof("pro:%d", pro)
 	buffer := protocol.Encode(&engine.InnerMsg{
 		ClientIds: []string{cid},
 		ClientMsg: &engine.ClientMsg{

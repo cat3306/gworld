@@ -34,11 +34,13 @@ func (c *ConnManager) Get(id string) (bool, gnet.Conn) {
 	con, ok := c.connections[id]
 	return ok, con
 }
-func (c *ConnManager) Broadcast(buffer *bytebufferpool.ByteBuffer) {
+func (c *ConnManager) Broadcast(buffer *bytebufferpool.ByteBuffer, bufferIsPut bool) {
 	c.locker.RLock()
 	defer func() {
 		c.locker.RUnlock()
-		bytebufferpool.Put(buffer)
+		if bufferIsPut {
+			bytebufferpool.Put(buffer)
+		}
 	}()
 	for _, v := range c.connections {
 		_, err := v.Write(buffer.Bytes())

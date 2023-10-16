@@ -38,7 +38,9 @@ func (l *LogicConnMgr) GetByLogic(logic uint32) (*ConnManager, bool) {
 }
 
 func (l *LogicConnMgr) Broadcast(buffer *bytebufferpool.ByteBuffer) {
+	defer bytebufferpool.Put(buffer)
 	for _, v := range l.logicConnMgr {
-		v.Broadcast(buffer)
+		//glog.Logger.Sugar().Info(v.Len())
+		v.Broadcast(buffer, false)
 	}
 }
