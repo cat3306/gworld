@@ -53,8 +53,8 @@ func (g *GateServer) OnClose(c gnet.Conn, err error) (action gnet.Action) {
 	if err != nil {
 		reason = err.Error()
 	}
-	glog.Logger.Sugar().Infof("cid:%s close,reason:%s", c.ID(), reason)
-	g.ConnMgr.Remove(c.ID())
+	glog.Logger.Sugar().Infof("cid:%s close,reason:%s", c.Id(), reason)
+	g.ConnMgr.Remove(c.Id())
 	if g.innerGameServerBroadcast == 0 {
 		g.innerGameServerBroadcast = util.MethodHash("InnerOnBroadcast")
 	}
@@ -63,16 +63,15 @@ func (g *GateServer) OnClose(c gnet.Conn, err error) (action gnet.Action) {
 		Conn:  c,
 	}
 	ctx.SetProperty("Proto", util.MethodHash("OnDisconnect"))
-	ctx.SetProperty("cid", c.ID())
+	ctx.SetProperty("cid", c.Id())
 	g.ClientCtxChan <- ctx
 	return gnet.None
 }
 
 func (g *GateServer) OnOpen(c gnet.Conn) (out []byte, action gnet.Action) {
 	cId := strconv.Itoa(c.Fd()) //util.GenConnId()
-	c.SetId(cId)
 	g.ConnMgr.Add(c)
-	glog.Logger.Sugar().Infof("clinet conn cid:%s connect", c.ID())
+	glog.Logger.Sugar().Infof("clinet conn cid:%s connect", c.Id())
 	if g.innerGameServerBroadcast == 0 {
 		g.innerGameServerBroadcast = util.MethodHash("InnerOnBroadcast")
 	}
@@ -80,7 +79,7 @@ func (g *GateServer) OnOpen(c gnet.Conn) (out []byte, action gnet.Action) {
 		Proto: g.innerGameServerBroadcast,
 		Conn:  c,
 	}
-	ctx.SetProperty("cid", c.ID())
+	ctx.SetProperty("cid", cId)
 	ctx.SetProperty("Proto", util.MethodHash("OnConnect"))
 	g.ClientCtxChan <- ctx
 	return out, gnet.None

@@ -50,7 +50,7 @@ func (g *GameServer) OnOpen(c gnet.Conn) (out []byte, action gnet.Action) {
 	//cId := util.GenConnId()
 	//c.SetId(cId)
 	//g.ConnMgr.Add(c)
-	glog.Logger.Sugar().Infof("gate clinet conn cid:%s connect", c.ID())
+	glog.Logger.Sugar().Infof("gate clinet conn cid:%s connect", c.Id())
 	buffer := protocol.Encode(g.Config.Logic, protocol.String, util.MethodHash("SetLogic"), 0)
 
 	copyOut := make([]byte, buffer.Len())
@@ -97,8 +97,8 @@ func (g *GameServer) OnClose(c gnet.Conn, err error) (action gnet.Action) {
 	if err != nil {
 		reason = err.Error()
 	}
-	glog.Logger.Sugar().Infof("cid:%s close,reason:%s", c.ID(), reason)
-	g.ConnMgr.Remove(c.ID())
+	glog.Logger.Sugar().Infof("cid:%s close,reason:%s", c.Id(), reason)
+	g.ConnMgr.Remove(c.Id())
 	return gnet.None
 }
 

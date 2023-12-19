@@ -21,7 +21,7 @@ func NewConnManager() *ConnManager {
 func (c *ConnManager) Add(conn gnet.Conn) {
 	c.locker.Lock()
 	defer c.locker.Unlock()
-	c.connections[conn.ID()] = conn
+	c.connections[conn.Fd()] = conn
 }
 func (c *ConnManager) Remove(id string) {
 	c.locker.Lock()

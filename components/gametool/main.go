@@ -89,7 +89,7 @@ type HealthModel struct {
 	engine.BaseRouter
 }
 
-func (h *HealthModel) Init(v interface{}) engine.IRouter {
+func (h *HealthModel) Init(v ...interface{}) engine.IRouter {
 	return h
 }
 func (h *HealthModel) Health(ctx *protocol.Context) {
@@ -189,7 +189,7 @@ func StartCluster(ctx *cli.Context) error {
 	return err
 }
 
-func Cmd(name string, arg []string, showArgs bool, timeoutArgs ...time.Duration, ) (string, error) {
+func Cmd(name string, arg []string, showArgs bool, timeoutArgs ...time.Duration) (string, error) {
 	if showArgs {
 		fmt.Println(name + " " + strings.Join(arg, " "))
 	}
@@ -246,7 +246,7 @@ func initConfig(ctx *cli.Context) error {
 							IsDaemon: true,
 							BinPath:  "/Users/joker/code/go/bin/gate",
 							PidFile:  "/Users/joker/Documents/game/pid/gate0.pid",
-							LogFile:  "/Users/joker/Documents/game/log/gate0.out",
+							LogFile:  "/Users/joker/Documents/game/rpclog/gate0.out",
 						},
 					},
 				},
@@ -266,7 +266,7 @@ func initConfig(ctx *cli.Context) error {
 							IsDaemon: true,
 							BinPath:  "/Users/joker/code/go/bin/game",
 							PidFile:  "/Users/joker/Documents/game/pid/game0.pid",
-							LogFile:  "/Users/joker/Documents/game/log/game0.out",
+							LogFile:  "/Users/joker/Documents/game/rpclog/game0.out",
 						},
 					},
 					{
@@ -298,7 +298,7 @@ func initConfig(ctx *cli.Context) error {
 							IsDaemon: true,
 							BinPath:  "/Users/joker/code/go/bin/user",
 							PidFile:  "/Users/joker/Documents/game/pid/user1.pid",
-							LogFile:  "/Users/joker/Documents/game/log/user1.out",
+							LogFile:  "/Users/joker/Documents/game/rpclog/user1.out",
 						},
 					},
 				},
